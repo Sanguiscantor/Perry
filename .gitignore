@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+
+.yfinance_cache/
+
+*.csv
+*.parquet
+
+.env
+
+venv/
+.venv/
+
+outputs/
+logs/
+
+.vscode/

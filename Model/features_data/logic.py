@@ -1,157 +1,145 @@
+import pandas as pd
 from pathlib import Path
 
-import pandas as pd
+
+# ============================================
+# LOAD RAW DATASET
+# ============================================
+
+base_path = Path(__file__).resolve().parents[2]
+
+raw_path = (
+    base_path
+    / "Data"
+    / "master_raw_dataset.csv"
+)
+
+print(f"\nLoading raw dataset from: {raw_path}")
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = PROJECT_ROOT / "Data"
-OUTPUT_PATH = Path(__file__).with_name("master_feature_dataset.csv")
-
-REQUIRED_COLUMNS = [
-    "Datetime",
-    "Open",
-    "High",
-    "Low",
-    "Close",
-    "Volume",
-]
-
-FEATURE_COLUMNS = [
-    "Datetime",
-    "Close",
-    "momentum",
-    "return_1",
-    "volume_spike",
-    "volatility",
-    "target",
-    "directional_volume",
-]
-
-ROLLING_WINDOW = 20
-TARGET_CANDLE_OFFSET = 10
+df = pd.read_csv(raw_path)
 
 
-def find_input_csvs(data_dir: Path = DATA_DIR) -> list[Path]:
-    csv_files = sorted(data_dir.glob("*.csv"))
+# ============================================
+# DATETIME
+# ============================================
 
-    if not csv_files:
-        raise FileNotFoundError(f"No CSV files found in {data_dir}")
-
-    return csv_files
-
-
-def load_market_csv(csv_path: Path) -> pd.DataFrame:
-    df = pd.read_csv(csv_path)
-
-    missing_columns = [
-        column
-        for column in REQUIRED_COLUMNS
-        if column not in df.columns
-    ]
-
-    if missing_columns:
-        missing = ", ".join(missing_columns)
-        raise ValueError(f"{csv_path} is missing required columns: {missing}")
-
-    df = df.copy()
-    df["Datetime"] = pd.to_datetime(df["Datetime"], errors="coerce")
-    df = df.dropna(subset=["Datetime"])
-
-    numeric_columns = [
-        "Open",
-        "High",
-        "Low",
-        "Close",
-        "Volume",
-    ]
-
-    df[numeric_columns] = df[numeric_columns].apply(
-        pd.to_numeric,
-        errors="coerce",
-    )
-    df = df.dropna(subset=numeric_columns)
-
-    return df.sort_values(by="Datetime").reset_index(drop=True)
+df["Datetime"] = pd.to_datetime(
+    df["Datetime"],
+    format="mixed"
+)
 
 
-def build_features(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.copy()
+# ============================================
+# BASIC FEATURES
+# ============================================
 
-    df["momentum"] = df["Close"] - df["Close"].shift(1)
-    df["return_1"] = df["Close"].pct_change()
+# Candle midpoint
 
-    df["avg_volume"] = df["Volume"].rolling(window=ROLLING_WINDOW).mean()
-    df["volume_spike"] = df["Volume"] / df["avg_volume"]
-
-    df["volatility"] = df["return_1"].rolling(window=ROLLING_WINDOW).std()
-
-    df["directional_volume"] = df["Volume"] * (
-        (df["Close"] > df["Close"].shift(1)).astype(int) * 2 - 1
-    )
-
-    future_close = df["Close"].shift(-TARGET_CANDLE_OFFSET)
-
-    df["target"] = pd.Series(pd.NA, index=df.index, dtype="Int64")
-    df.loc[future_close.notna(), "target"] = (
-        future_close.loc[future_close.notna()]
-        > df.loc[future_close.notna(), "Close"]
-    ).astype(int)
-
-    required_feature_columns = [
-        column
-        for column in FEATURE_COLUMNS
-        if column != "target"
-    ]
-    feature_df = df.dropna(subset=required_feature_columns).reset_index(drop=True)
-
-    return feature_df
+df["body_mid"] = (
+    df["Open"] + df["Close"]
+) / 2
 
 
-def build_master_feature_dataset(data_dir: Path = DATA_DIR) -> pd.DataFrame:
-    feature_frames = []
+# Momentum
 
-    for csv_path in find_input_csvs(data_dir):
-        source_df = load_market_csv(csv_path)
-        feature_df = build_features(source_df)
-
-        if feature_df.empty:
-            print(f"Skipped {csv_path.name}: not enough rows for rolling features")
-            continue
-
-        feature_frames.append(feature_df)
-
-    if not feature_frames:
-        raise ValueError("No feature rows were created from the input CSV files")
-
-    return (
-        pd.concat(feature_frames, ignore_index=True)
-        .sort_values(by="Datetime")
-        .reset_index(drop=True)
-    )
+df["momentum"] = (
+    df["Close"] - df["Close"].shift(10)
+)
 
 
-def save_feature_dataset(df: pd.DataFrame, output_path: Path = OUTPUT_PATH) -> None:
-    try:
-        df.to_csv(
-            output_path,
-            index=False,
-        )
-    except PermissionError as exc:
-        raise PermissionError(
-            f"Unable to write {output_path}. Close the file if it is open "
-            "in Excel or another program, then run this script again."
-        ) from exc
+# Return
+
+df["return_1"] = (
+    df["Close"].pct_change()
+)
 
 
-def main() -> None:
-    df = build_master_feature_dataset()
+# Average volume
 
-    print(df[FEATURE_COLUMNS])
+df["avg_volume"] = (
+    df["Volume"]
+    .rolling(window=20)
+    .mean()
+)
 
-    save_feature_dataset(df)
 
-    print(f"\nSaved feature dataset to {OUTPUT_PATH}")
+# Volume spike
+
+df["volume_spike"] = (
+    df["Volume"]
+    / df["avg_volume"]
+)
 
 
-if __name__ == "__main__":
-    main()
+# Volatility
+
+df["volatility"] = (
+    df["return_1"]
+    .rolling(window=10)
+    .std()
+)
+
+
+# Directional volume
+
+df["directional_volume"] = (
+    (df["Close"] - df["Open"])
+    * df["Volume"]
+)
+
+
+# ============================================
+# 3-WAY TARGET
+# ============================================
+
+future_return = (
+    df["Close"].shift(-10)
+    - df["Close"]
+) / df["Close"]
+
+
+threshold = 0.003
+
+
+def classify_target(x):
+
+    if x > threshold:
+        return 2
+
+    elif x < -threshold:
+        return 0
+
+    else:
+        return 1
+
+
+df["target"] = future_return.apply(classify_target)
+
+
+# ============================================
+# CLEAN DATA
+# ============================================
+
+df = df.dropna()
+
+
+# ============================================
+# SAVE FEATURE DATASET
+# ============================================
+
+output_path = (
+    Path(__file__).resolve().parent
+    / "master_feature_dataset.csv"
+)
+
+
+df.to_csv(
+    output_path,
+    index=False
+)
+
+
+print("\nFeature dataset saved successfully.")
+print(f"\nSaved to: {output_path}")
+print(f"\nFinal rows: {len(df)}")
