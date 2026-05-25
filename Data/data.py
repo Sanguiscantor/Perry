@@ -8,9 +8,20 @@ from pathlib import Path
 # ============================================
 
 CONFIG = {
-    "ticker": "RELIANCE.NS",
+    "tickers": [
+        "RELIANCE.NS",
+        "HDFCBANK.NS",
+        "ICICIBANK.NS",
+        "SBIN.NS",
+        "TCS.NS",
+        "INFY.NS",
+        "LT.NS",
+        "TATASTEEL.NS",
+        "ADANIENT.NS",
+        "AXISBANK.NS",
+    ],
     "interval": "5m",
-    "period": "60d"
+    "period": "60d",
 }
 
 
@@ -18,20 +29,21 @@ CONFIG = {
 # DOWNLOAD DATA
 # ============================================
 
-def fetch_market_data():
+def fetch_symbol_data(ticker):
 
-    print("\nDownloading market data...\n")
+    print(f"\nDownloading {ticker}...")
 
     df = yf.download(
-        tickers=CONFIG["ticker"],
+        tickers=ticker,
         interval=CONFIG["interval"],
         period=CONFIG["period"],
         auto_adjust=False,
-        progress=False
+        progress=False,
     )
 
     if df.empty:
-        raise ValueError("No data downloaded.")
+        print(f"  Skipped {ticker}: no data returned.")
+        return None
 
     df = df.reset_index()
 
@@ -46,7 +58,7 @@ def fetch_market_data():
         "High",
         "Low",
         "Close",
-        "Volume"
+        "Volume",
     ]]
 
     # Timezone conversion
@@ -63,7 +75,7 @@ def fetch_market_data():
         "Open",
         "High",
         "Low",
-        "Close"
+        "Close",
     ]
 
     df[price_cols] = (
@@ -71,7 +83,58 @@ def fetch_market_data():
         .round(2)
     )
 
+    df["symbol"] = ticker
+
+    df = df.sort_values("Datetime").reset_index(drop=True)
+
+    print(f"  {ticker}: {len(df)} rows")
+
     return df
+
+
+def fetch_market_data():
+
+    print("\nDownloading market data...\n")
+
+    frames = []
+    failed = []
+
+    for ticker in CONFIG["tickers"]:
+        try:
+            df = fetch_symbol_data(ticker)
+
+            if df is not None:
+                frames.append(df)
+            else:
+                failed.append(ticker)
+
+        except Exception as exc:
+            print(f"  Skipped {ticker}: {exc}")
+            failed.append(ticker)
+
+    if not frames:
+        raise ValueError("No data downloaded for any symbol.")
+
+    master = pd.concat(frames, ignore_index=True)
+
+    master = master.sort_values(
+        ["symbol", "Datetime"]
+    ).reset_index(drop=True)
+
+    master = master[[
+        "Datetime",
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+        "symbol",
+    ]]
+
+    if failed:
+        print(f"\nFailed symbols ({len(failed)}): {', '.join(failed)}")
+
+    return master
 
 
 # ============================================
@@ -87,12 +150,13 @@ def save_dataset(df):
 
     df.to_csv(
         output_path,
-        index=False
+        index=False,
     )
 
     print("\nDataset saved successfully.")
     print(f"\nSaved to: {output_path}")
     print(f"\nTotal rows: {len(df)}")
+    print(f"\nSymbols: {df['symbol'].nunique()}")
 
 
 # ============================================

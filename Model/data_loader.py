@@ -9,10 +9,15 @@ FEATURE_COLUMNS = [
     "avg_volume",
     "volume_spike",
     "volatility",
-    "directional_volume"
+    "directional_volume",
+    "rolling_avg_momentum",
+    "compression_width",
+    "local_support",
+    "local_resistance",
 ]
 
-TARGET_COLUMN = "target"
+TARGET_COLUMN_D = "target_d"
+TARGET_COLUMN_P = "target_p"
 
 
 def load_dataset():
@@ -22,8 +27,6 @@ def load_dataset():
         / "features_data"
         / "master_feature_dataset.csv"
     )
-
-    print(f"\nLoading dataset: {dataset_path}")
 
     df = pd.read_csv(dataset_path)
 
@@ -37,10 +40,11 @@ def prepare_features_targets():
     print("\nAvailable Columns:")
     print(df.columns.tolist())
 
-    df = df.dropna(subset=[TARGET_COLUMN])
+    df = df.dropna(subset=[TARGET_COLUMN_D, TARGET_COLUMN_P])
 
     X = df[FEATURE_COLUMNS]
 
-    y = df[TARGET_COLUMN]
+    y_d = df[TARGET_COLUMN_D]
+    y_p = df[TARGET_COLUMN_P]
 
-    return X, y, df
+    return X, y_d, y_p, df
