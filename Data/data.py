@@ -20,8 +20,8 @@ CONFIG = {
         "ADANIENT.NS",
         "AXISBANK.NS",
     ],
-    "interval": "5m",
-    "period": "60d",
+    "interval": "15m",
+    "period": "1mo",
 }
 
 
