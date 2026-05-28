@@ -7,6 +7,10 @@ from market_structure import add_anchored_structure_features
 
 PIVOT_WINDOW = 3
 BREAK_CONFIRMATION_CANDLES = 2
+MIN_PIVOT_DISTANCE = 10
+MAX_ALLOWED_SLOPE = 0.0022
+PIVOT_STRENGTH = 0.85
+MINIMUM_TRENDLINE_SPAN = 28
 
 
 # ============================================
@@ -200,6 +204,10 @@ def add_symbol_anchored_structure(symbol_df):
         symbol_df,
         pivot_window=PIVOT_WINDOW,
         confirmation_candles=BREAK_CONFIRMATION_CANDLES,
+        min_pivot_distance=MIN_PIVOT_DISTANCE,
+        max_allowed_slope=MAX_ALLOWED_SLOPE,
+        pivot_strength=PIVOT_STRENGTH,
+        minimum_trendline_span=MINIMUM_TRENDLINE_SPAN,
     )
 
 

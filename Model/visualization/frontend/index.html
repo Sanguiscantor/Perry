@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Perry Market Structure</title>
+  <link rel="stylesheet" href="app/styles.css">
+</head>
+<body>
+  <header class="toolbar">
+    <div class="brand">Perry Structure</div>
+    <label>
+      Symbol
+      <select id="symbolSelect"></select>
+    </label>
+    <label>
+      Candles
+      <select id="candleRangeSelect"></select>
+    </label>
+    <label>
+      <input id="supportToggle" type="checkbox" checked>
+      Support
+    </label>
+    <label>
+      <input id="resistanceToggle" type="checkbox" checked>
+      Resistance
+    </label>
+    <label>
+      <input id="pivotsToggle" type="checkbox" checked>
+      Pivots
+    </label>
+    <label>
+      <input id="signalsToggle" type="checkbox" checked>
+      Signals
+    </label>
+  </header>
+
+  <main id="chartContainer"></main>
+
+  <script src="https://unpkg.com/lightweight-charts@5.2.0/dist/lightweight-charts.standalone.production.js"></script>
+  <script src="data/marketStructureData.js"></script>
+  <script src="charts/lightweightChart.js"></script>
+  <script src="overlays/structureOverlays.js"></script>
+  <script src="app/main.js"></script>
+</body>
+</html>
