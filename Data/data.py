@@ -1,3 +1,27 @@
+import tkinter as tk
+import winsound
+
+def show_completion_popup(message):
+
+    winsound.MessageBeep()
+
+    root = tk.Tk()
+
+    root.title("Perry")
+
+    root.geometry("400x120")
+
+    label = tk.Label(
+        root,
+        text=message,
+        font=("Arial", 12),
+        pady=20,
+    )
+
+    label.pack()
+
+    root.mainloop()
+
 from binance.client import Client
 import pandas as pd
 from pathlib import Path
@@ -7,7 +31,7 @@ client = Client()
 SYMBOLS = [
     "BTCUSDT",
     "ETHUSDT",
-    #"SOLUSDT",
+    "SOLUSDT",
     #"BNBUSDT",
     #"XRPUSDT",
 ]
@@ -100,7 +124,9 @@ def main():
     print("\nSaved")
     print(output_path)
     print(len(master))
-
+    show_completion_popup(
+    f"Download Complete\n\nRows: {len(master):,}"
+    )
 
 if __name__ == "__main__":
     main()

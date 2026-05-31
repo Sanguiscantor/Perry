@@ -1,3 +1,28 @@
+import tkinter as tk
+import winsound
+
+def show_completion_popup(message):
+
+    winsound.MessageBeep()
+
+    root = tk.Tk()
+
+    root.title("Perry")
+
+    root.geometry("400x120")
+
+    label = tk.Label(
+        root,
+        text=message,
+        font=("Arial", 12),
+        pady=20,
+    )
+
+    label.pack()
+
+    root.mainloop()
+
+
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -412,7 +437,7 @@ df["equilibrium_trend_distance"] = (
 # TARGETS
 # ============================================
 
-horizon = 24
+horizon = 72
 
 # --------------------------------------------------
 # OLD TARGET LOGIC (KEEP FOR ROLLBACK)
@@ -480,8 +505,8 @@ future_return = (
     future_close - df["Close"]
 ) / df["Close"]
 
-bullish_threshold = 0.005
-bearish_threshold = -0.005
+bullish_threshold = 0.0075
+bearish_threshold = -0.0075
 
 bullish = (
     future_return > bullish_threshold
@@ -535,3 +560,6 @@ df.to_csv(
 print("\nFeature dataset saved successfully.")
 print(f"\nSaved to: {output_path}")
 print(f"\nFinal rows: {len(df)}")
+show_completion_popup(
+    f"Feature Compilation Complete\n\nRows: {len(df):,}"
+)

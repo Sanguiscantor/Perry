@@ -5,7 +5,8 @@ __pycache__/
 
 *.csv
 *.parquet
-
+*.pkl
+*.joblib
 .env
 
 venv/
@@ -15,3 +16,6 @@ outputs/
 logs/
 
 .vscode/
+
+Model/features_data/master_feature_dataset.csv
+Data/master_raw_dataset.csv

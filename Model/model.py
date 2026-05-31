@@ -16,3 +16,16 @@ def build_model():
     )
 
     return model
+
+
+def build_binary_model():
+
+    return XGBClassifier(
+        objective="binary:logistic",
+        n_estimators=200,
+        max_depth=4,
+        subsample=0.5,
+        colsample_bytree=0.5,
+        random_state=42,
+        eval_metric="logloss",
+    )
