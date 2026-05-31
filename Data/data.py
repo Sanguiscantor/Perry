@@ -1,175 +1,105 @@
-import yfinance as yf
+from binance.client import Client
 import pandas as pd
 from pathlib import Path
 
+client = Client()
 
-# ============================================
-# CONFIG
-# ============================================
+SYMBOLS = [
+    "BTCUSDT",
+    "ETHUSDT",
+    #"SOLUSDT",
+    #"BNBUSDT",
+    #"XRPUSDT",
+]
 
-CONFIG = {
-    "tickers": [
-        "RELIANCE.NS",
-        "HDFCBANK.NS",
-        "ICICIBANK.NS",
-        "SBIN.NS",
-        "TCS.NS",
-        "INFY.NS",
-        "LT.NS",
-        "TATASTEEL.NS",
-        "ADANIENT.NS",
-        "AXISBANK.NS",
-    ],
-    "interval": "15m",
-    "period": "1mo",
-}
+INTERVAL = Client.KLINE_INTERVAL_15MINUTE
 
+START_DATE = "1 Jan, 2022"
 
-# ============================================
-# DOWNLOAD DATA
-# ============================================
+def fetch_symbol(symbol):
 
-def fetch_symbol_data(ticker):
+    print(f"\nDownloading {symbol}")
 
-    print(f"\nDownloading {ticker}...")
-
-    df = yf.download(
-        tickers=ticker,
-        interval=CONFIG["interval"],
-        period=CONFIG["period"],
-        auto_adjust=False,
-        progress=False,
+    klines = client.get_historical_klines(
+        symbol,
+        INTERVAL,
+        START_DATE,
     )
 
-    if df.empty:
-        print(f"  Skipped {ticker}: no data returned.")
-        return None
+    df = pd.DataFrame(
+        klines,
+        columns=[
+            "open_time",
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Volume",
+            "close_time",
+            "quote_asset_volume",
+            "number_of_trades",
+            "taker_buy_base",
+            "taker_buy_quote",
+            "ignore",
+        ],
+    )
 
-    df = df.reset_index()
+    df["Datetime"] = pd.to_datetime(
+        df["open_time"],
+        unit="ms",
+    )
 
-    # Flatten multi-index columns if needed
-    if isinstance(df.columns, pd.MultiIndex):
-        df.columns = df.columns.get_level_values(0)
-
-    # Keep required columns
-    df = df[[
-        "Datetime",
+    for col in [
         "Open",
         "High",
         "Low",
         "Close",
         "Volume",
-    ]]
+    ]:
+        df[col] = pd.to_numeric(df[col])
 
-    # Timezone conversion
-    df["Datetime"] = pd.to_datetime(df["Datetime"])
+    df["symbol"] = symbol
 
-    if df["Datetime"].dt.tz is not None:
-        df["Datetime"] = (
-            df["Datetime"]
-            .dt.tz_convert("Asia/Kolkata")
-        )
-
-    # Round prices
-    price_cols = [
-        "Open",
-        "High",
-        "Low",
-        "Close",
+    return df[
+        [
+            "Datetime",
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Volume",
+            "symbol",
+        ]
     ]
 
-    df[price_cols] = (
-        df[price_cols]
-        .round(2)
-    )
 
-    df["symbol"] = ticker
-
-    df = df.sort_values("Datetime").reset_index(drop=True)
-
-    print(f"  {ticker}: {len(df)} rows")
-
-    return df
-
-
-def fetch_market_data():
-
-    print("\nDownloading market data...\n")
+def main():
 
     frames = []
-    failed = []
 
-    for ticker in CONFIG["tickers"]:
-        try:
-            df = fetch_symbol_data(ticker)
+    for symbol in SYMBOLS:
+        frames.append(
+            fetch_symbol(symbol)
+        )
 
-            if df is not None:
-                frames.append(df)
-            else:
-                failed.append(ticker)
-
-        except Exception as exc:
-            print(f"  Skipped {ticker}: {exc}")
-            failed.append(ticker)
-
-    if not frames:
-        raise ValueError("No data downloaded for any symbol.")
-
-    master = pd.concat(frames, ignore_index=True)
-
-    master = master.sort_values(
-        ["symbol", "Datetime"]
-    ).reset_index(drop=True)
-
-    master = master[[
-        "Datetime",
-        "Open",
-        "High",
-        "Low",
-        "Close",
-        "Volume",
-        "symbol",
-    ]]
-
-    if failed:
-        print(f"\nFailed symbols ({len(failed)}): {', '.join(failed)}")
-
-    return master
-
-
-# ============================================
-# SAVE DATASET
-# ============================================
-
-def save_dataset(df):
+    master = pd.concat(
+        frames,
+        ignore_index=True,
+    )
 
     output_path = (
         Path(__file__).resolve().parent
         / "master_raw_dataset.csv"
     )
 
-    df.to_csv(
+    master.to_csv(
         output_path,
         index=False,
     )
 
-    print("\nDataset saved successfully.")
-    print(f"\nSaved to: {output_path}")
-    print(f"\nTotal rows: {len(df)}")
-    print(f"\nSymbols: {df['symbol'].nunique()}")
-
-
-# ============================================
-# MAIN
-# ============================================
-
-def main():
-
-    df = fetch_market_data()
-
-    save_dataset(df)
-
-    print("\nRaw dataset generation complete.")
+    print("\nSaved")
+    print(output_path)
+    print(len(master))
 
 
 if __name__ == "__main__":

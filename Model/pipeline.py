@@ -20,11 +20,11 @@ from model import build_model
 def build_regressor():
 
     return XGBRegressor(
-        n_estimators=100,
-        max_depth=3,
-        learning_rate=0.02,
-        subsample=0.4,
-        colsample_bytree=0.4,
+        n_estimators=50,
+        max_depth=2,
+        learning_rate=0.03,
+        subsample=0.5,
+        colsample_bytree=0.5,
         random_state=42,
     )
 
@@ -82,8 +82,12 @@ def run_pipeline():
 
     regressor = build_regressor()
 
-    regressor.fit(X_train, y_p_train)
-
+    trend_mask = y_d_train != 1
+    
+    regressor.fit(
+        X_train[trend_mask],
+        y_p_train[trend_mask]
+    )
 
     predicted_d = classifier.predict(X_test)
     probabilities = classifier.predict_proba(X_test)
@@ -172,7 +176,7 @@ def run_pipeline():
     accuracy_gap = train_accuracy - accuracy
     r2_gap = train_r2 - r2
 
-    if accuracy_gap > 0.20 or r2_gap > 0.50:
+    if accuracy_gap > 0.10 or r2_gap > 0.50:
         print("Overfit")
     elif train_accuracy < 0.50 and accuracy < 0.50:
         print("Underfit")

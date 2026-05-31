@@ -5,9 +5,9 @@ from pathlib import Path
 from market_structure import add_anchored_structure_features
 
 
-PIVOT_WINDOW = 3
+PIVOT_WINDOW = 8
 BREAK_CONFIRMATION_CANDLES = 2
-MIN_PIVOT_DISTANCE = 10
+MIN_PIVOT_DISTANCE = 20
 MAX_ALLOWED_SLOPE = 0.0022
 PIVOT_STRENGTH = 0.85
 MINIMUM_TRENDLINE_SPAN = 28
@@ -95,11 +95,13 @@ df["volatility"] = (
 # Directional volume
 
 df["directional_volume"] = (
-    (df["Close"] - df["Open"])
+    ((df["Close"] - df["Open"]) / df["Open"])
     * df["Volume"]
 )
 
-
+df["directional_volume_spike"] = (
+    df["volume_spike"]*df["directional_volume"]
+)
 # ============================================
 # MARKET REGIME (ATR / ADX)
 # ============================================
@@ -410,67 +412,103 @@ df["equilibrium_trend_distance"] = (
 # TARGETS
 # ============================================
 
-# Sustained move targets from next 12 candles:
-# use future max High and future min Low windows (excluding current candle).
-horizon = 12
-threshold = 0.0045
+horizon = 24
 
-future_max_high = (
-    df["High"]
-    .shift(-1)
-    .rolling(window=horizon, min_periods=horizon)
-    .max()
-    .shift(-(horizon - 1))
-)
+# --------------------------------------------------
+# OLD TARGET LOGIC (KEEP FOR ROLLBACK)
+# --------------------------------------------------
 
-future_min_low = (
-    df["Low"]
-    .shift(-1)
-    .rolling(window=horizon, min_periods=horizon)
-    .min()
-    .shift(-(horizon - 1))
-)
+# threshold = 0.0045
+#
+# future_max_high = (
+#     df["High"]
+#     .shift(-1)
+#     .rolling(window=horizon, min_periods=horizon)
+#     .max()
+#     .shift(-(horizon - 1))
+# )
+#
+# future_min_low = (
+#     df["Low"]
+#     .shift(-1)
+#     .rolling(window=horizon, min_periods=horizon)
+#     .min()
+#     .shift(-(horizon - 1))
+# )
+#
+# future_max_return = (
+#     future_max_high
+#     - df["Close"]
+# ) / df["Close"]
+#
+# future_min_return = (
+#     future_min_low
+#     - df["Close"]
+# ) / df["Close"]
+#
+# bearish_magnitude = future_min_return.abs()
+#
+# bullish = (
+#     (future_max_return > bearish_magnitude)
+#     & (future_max_return > threshold)
+# )
+#
+# bearish = (
+#     (bearish_magnitude > future_max_return)
+#     & (bearish_magnitude > threshold)
+# )
+#
+# df["target_d"] = np.select(
+#     [bullish, bearish],
+#     [2, 0],
+#     default=1,
+# )
+#
+# df["target_p"] = np.select(
+#     [bullish, bearish],
+#     [future_max_return, future_min_return],
+#     default=0.0,
+# )
 
-future_max_return = (
-    future_max_high
-    - df["Close"]
+# --------------------------------------------------
+# NEW TARGET LOGIC
+# --------------------------------------------------
+
+future_close = df["Close"].shift(-horizon)
+
+future_return = (
+    future_close - df["Close"]
 ) / df["Close"]
 
-future_min_return = (
-    future_min_low
-    - df["Close"]
-) / df["Close"]
-
-
-# Dominant directional excursion labeling (opportunity-based).
-# Instead of treating "both sides hit" as sideways, we select the direction
-# with the stronger tradeable excursion over the next 12 candles.
-bearish_magnitude = future_min_return.abs()
+bullish_threshold = 0.005
+bearish_threshold = -0.005
 
 bullish = (
-    (future_max_return > bearish_magnitude)
-    & (future_max_return > threshold)
+    future_return > bullish_threshold
 )
 
 bearish = (
-    (bearish_magnitude > future_max_return)
-    & (bearish_magnitude > threshold)
+    future_return < bearish_threshold
 )
 
 df["target_d"] = np.select(
-    [bullish, bearish],
-    [2, 0],
+    [
+        bullish,
+        bearish,
+    ],
+    [
+        2,
+        0,
+    ],
     default=1,
 )
 
+# Regression target becomes actual realized return
 
-# Regression target: signed dominant excursion (0 for sideways).
-df["target_p"] = np.select(
-    [bullish, bearish],
-    [future_max_return, future_min_return],
-    default=0.0,
-)
+df["target_p"] = future_return
 
+print("\nNew Target Distribution:")
+print(df["target_d"].value_counts())
 
 # ============================================
 # CLEAN DATA
@@ -493,7 +531,6 @@ df.to_csv(
     output_path,
     index=False
 )
-
 
 print("\nFeature dataset saved successfully.")
 print(f"\nSaved to: {output_path}")
