@@ -7,7 +7,7 @@ from tsfresh import extract_features, select_features
 
 
 WINDOW_SIZE = 96
-SAMPLE_LIMIT = 15000
+SAMPLE_LIMIT = 40000
 HORIZON = 72
 N_JOBS = 12
 
