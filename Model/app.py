@@ -1,6 +1,6 @@
 PIPELINE_MODE = "multiclass"
 # or
-# PIPELINE_MODE = "hierarchy"
+#PIPELINE_MODE = "hierarchy"
 
 
 def main():

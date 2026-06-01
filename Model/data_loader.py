@@ -3,27 +3,11 @@ from pathlib import Path
 
 
 FEATURE_COLUMNS = [
-
-    "volatility",
-    "atr_ratio",
-    "atr_14",
-
-    "swing_high",
-    "swing_low",
-
-    "distance_to_anchored_support",
-    "distance_to_anchored_resistance",
-
-    "compression_width",
-
-    "avg_volume",
-    "directional_volume",
-
-    "equilibrium_trend_distance",
-
-    "ma_cross_distance_20_50",
-    "ma_cross_distance_50_100",
-
+    "Open",
+    "High",
+    "Low",
+    "Close",
+    "Volume",
 ]
 
 TARGET_COLUMN_D = "target_d"

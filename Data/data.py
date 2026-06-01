@@ -30,15 +30,15 @@ client = Client()
 
 SYMBOLS = [
     "BTCUSDT",
-    "ETHUSDT",
-    "SOLUSDT",
+    #"ETHUSDT",
+    #"SOLUSDT",
     #"BNBUSDT",
     #"XRPUSDT",
 ]
 
 INTERVAL = Client.KLINE_INTERVAL_15MINUTE
 
-START_DATE = "1 Jan, 2022"
+START_DATE = "1 Jan, 2024"
 
 def fetch_symbol(symbol):
 
