@@ -1,0 +1,33 @@
+{
+  "generated_at": "2026-06-02T19:17:03.508386+00:00",
+  "files": [
+    {
+      "path": "C:\\Users\\Admin\\Downloads\\Experiment\\Perry The Platypus\\artifacts\\data\\microstructure\\basis_15m.csv",
+      "rows": 424215
+    },
+    {
+      "path": "C:\\Users\\Admin\\Downloads\\Experiment\\Perry The Platypus\\artifacts\\data\\microstructure\\deribit_instruments_BTC.csv",
+      "rows": 970
+    },
+    {
+      "path": "C:\\Users\\Admin\\Downloads\\Experiment\\Perry The Platypus\\artifacts\\data\\microstructure\\deribit_trades_BTC-3JUN26-64000-C.csv",
+      "rows": null
+    },
+    {
+      "path": "C:\\Users\\Admin\\Downloads\\Experiment\\Perry The Platypus\\artifacts\\data\\microstructure\\deribit_trades_BTC-3JUN26-64000-P.csv",
+      "rows": 25
+    },
+    {
+      "path": "C:\\Users\\Admin\\Downloads\\Experiment\\Perry The Platypus\\artifacts\\data\\microstructure\\deribit_trades_BTC-3JUN26-65000-C.csv",
+      "rows": null
+    },
+    {
+      "path": "C:\\Users\\Admin\\Downloads\\Experiment\\Perry The Platypus\\artifacts\\data\\microstructure\\deribit_trades_BTC-3JUN26-65000-P.csv",
+      "rows": 177
+    },
+    {
+      "path": "C:\\Users\\Admin\\Downloads\\Experiment\\Perry The Platypus\\artifacts\\data\\microstructure\\deribit_trades_BTC-3JUN26-66000-C.csv",
+      "rows": null
+    }
+  ]
+}

@@ -51,7 +51,7 @@ from research_engine import (  # noqa: E402
 )
 
 PHASE_DIR = ROOT / "research_phases"
-ARTIFACTS = PHASE_DIR / "artifacts"
+ARTIFACTS = ROOT / "artifacts"
 LOG_PATH = ROOT / "research_program_log.md"
 MULTI_ASSET_PATH = ROOT / "Data" / "multi_asset_dataset.csv"
 BTC_ONLY_PATH = ROOT / "Data" / "master_raw_dataset.csv"
@@ -845,7 +845,7 @@ def generate_market_state_report(p3: dict[str, Any]) -> None:
 
 
 def generate_transition_report(p4: dict[str, Any]) -> None:
-    lines = ["# State Transition Report (Phase 4)", "", f"States: **{p4.get('n_states')}**", "", "Transition matrix P(state_t+1 | state_t) stored in `research_phases/artifacts/phase4_transitions.json`.", ""]
+    lines = ["# State Transition Report (Phase 4)", "", f"States: **{p4.get('n_states')}**", "", "Transition matrix P(state_t+1 | state_t) stored in `artifacts/phase4_transitions.json`.", ""]
     (ROOT / "state_transition_report.md").write_text("\n".join(lines), encoding="utf-8")
 
 

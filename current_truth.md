@@ -186,9 +186,21 @@ Auto-maintained from `research_phases/memory_registry.json`. Do not edit by hand
 - **Evidence:** No historical book data
 - **Source:** data_expansion_report.md
 
-## RECENT UPDATES (2026-06-03)
+### Futures-spot basis computed (15m)
 
-- **Deribit IV backfill attempt:** Historical IV acquisition via public Deribit APIs was attempted (probing multiple endpoints and adding snapshot + backfill scripts). Result: public endpoints do not provide a 6-month historical IV panel — backfill blocked by data availability. See `artifacts/data/microstructure/deribit_iv_panel.csv` for live snapshots and `Data/backfill_deribit_iv.py` for the feasibility script.
+- **Confidence:** N/A
+- **Evidence:** `artifacts/data/microstructure/basis_15m.csv` generated from existing futures and spot klines; not yet tested in walk-forward.
+- **Source:** Data acquisition 2026-06-03
 
-- **Actionable next steps:** Vendor IV/L2/liquidation feeds or reconstruct IV from archived option prices/order-books. See `docs/remaining_frontiers.md` for prioritized sources and cheapest test paths.
+### Liquidation archives availability
+
+- **Confidence:** N/A
+- **Evidence:** Best-effort Binance FAPI liquidation endpoint returned maintenance error; historical liquidation archives not obtained programmatically.
+- **Source:** Data acquisition 2026-06-03
+
+### Deribit options chain acquisition
+
+- **Confidence:** N/A
+- **Evidence:** Attempted public Deribit instrument fetch returned 400; retry with corrected parameters or alternate Deribit endpoints required.
+- **Source:** Data acquisition 2026-06-03
 

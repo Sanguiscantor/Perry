@@ -10,6 +10,9 @@ from typing import Any, Literal
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 REGISTRY_PATH = ROOT / "research_phases" / "memory_registry.json"
+ROOT_CURRENT_TRUTH = ROOT / "current_truth.md"
+ROOT_RESEARCH_ROADMAP = ROOT / "research_roadmap.md"
+ROOT_RESEARCH_JOURNAL = ROOT / "research_journal.md"
 
 Category = Literal["CONFIRMED", "REJECTED", "PARTIAL EVIDENCE", "UNTESTED"]
 HypothesisStatus = Literal["CONFIRMED", "REJECTED", "PARTIAL EVIDENCE", "UNTESTED", "IN PROGRESS"]
@@ -125,6 +128,100 @@ def _format_finding(f: dict[str, Any]) -> str:
     )
 
 
+def _write_doc(path: Path, lines: list[str]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def _format_hypothesis_table_row(h: dict[str, Any]) -> str:
+    summary = h.get("summary", "").replace("|", "/")[:120]
+    return f"| {h['id']} | {h['status']} | {summary} | {h.get('source', '')} |"
+
+
+def _format_hypothesis_detail(h: dict[str, Any]) -> list[str]:
+    return [
+        f"### {h['id']} — {h['status']}",
+        "",
+        h.get("summary", ""),
+        "",
+        f"- **Evidence:** {h.get('evidence', '')}",
+        f"- **Updated:** {h.get('updated', '')}",
+        "",
+    ]
+
+
+def _format_findings_summary(by_cat: dict[str, list[dict]]) -> list[str]:
+    lines: list[str] = ["## Findings", ""]
+    for cat in ["CONFIRMED", "REJECTED", "PARTIAL EVIDENCE", "UNTESTED"]:
+        lines.append(f"### {cat}")
+        items = by_cat.get(cat, [])
+        if not items:
+            lines.append("- _None recorded._")
+        else:
+            for f in items:
+                lines.append(f"- {f['statement']} ({f['confidence']}) — {f['evidence']} [{f['source']}]")
+        lines.append("")
+    return lines
+
+
+def _load_log_file(path: Path) -> list[str]:
+    if not path.exists():
+        return []
+    return [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def _write_journal(registry: dict[str, Any]) -> None:
+    research_log = ROOT / "research_log.md"
+    program_log = ROOT / "research_program_log.md"
+    lines = [
+        "# Research Journal — Perry",
+        "",
+        f"**Last updated:** {registry.get('updated', 'never')}",
+        "",
+        "## Chronological log",
+        "",
+    ]
+    research_lines = _load_log_file(research_log)
+    if research_lines:
+        lines.append("### Research log")
+        lines.extend(research_lines)
+        lines.append("")
+    program_lines = _load_log_file(program_log)
+    if program_lines:
+        lines.append("### Research program log")
+        lines.extend(program_lines)
+        lines.append("")
+
+    lines.extend(["## Hypotheses", "", "| ID | Status | Summary | Evidence | Updated |", "| --- | --- | --- | --- | --- |"])
+    for h in registry.get("hypotheses", []):
+        summary = h.get("summary", "").replace("|", "/")[:120]
+        evidence = h.get("evidence", "").replace("|", "/")[:120]
+        lines.append(f"| {h['id']} | {h['status']} | {summary} | {evidence} | {h.get('updated', '')} |")
+    lines.append("")
+    for h in registry.get("hypotheses", []):
+        lines.extend(_format_hypothesis_detail(h))
+
+    by_cat = {cat: [f for f in registry.get("findings", []) if f.get("category") == cat] for cat in ["CONFIRMED", "REJECTED", "PARTIAL EVIDENCE", "UNTESTED"]}
+    lines.extend(_format_findings_summary(by_cat))
+
+    road = registry.get("roadmap", {})
+    lines.extend([
+        "## Current roadmap",
+        "",
+        f"**Current frontier:** {road.get('current_frontier', '_Not set_')}" if road.get('current_frontier') else "**Current frontier:** _Not set_",
+        "",
+        "### Highest-value unknowns",
+        "",
+    ])
+    for item in road.get("highest_value_unknowns", []):
+        lines.append(f"- {item}")
+    lines.extend(["", "### Recommended experiments", ""])
+    for item in road.get("recommended_experiments", []):
+        lines.append(f"- {item}")
+    lines.append("")
+    _write_doc(ROOT_RESEARCH_JOURNAL, lines)
+
+
 def sync_docs(registry: dict[str, Any] | None = None) -> None:
     registry = registry or load_registry()
     DOCS.mkdir(parents=True, exist_ok=True)
@@ -160,7 +257,8 @@ def sync_docs(registry: dict[str, Any] | None = None) -> None:
                 truth_lines.append(_format_finding(f))
                 truth_lines.append("")
 
-    (DOCS / "current_truth.md").write_text("\n".join(truth_lines), encoding="utf-8")
+    _write_doc(DOCS / "current_truth.md", truth_lines)
+    _write_doc(ROOT_CURRENT_TRUTH, truth_lines)
 
     hyp_lines = [
         "# Hypotheses — Perry",
@@ -171,16 +269,12 @@ def sync_docs(registry: dict[str, Any] | None = None) -> None:
         "| --- | --- | --- | --- |",
     ]
     for h in registry.get("hypotheses", []):
-        summary = h.get("summary", "").replace("|", "/")[:120]
-        hyp_lines.append(f"| {h['id']} | {h['status']} | {summary} | {h.get('source', '')} |")
+        hyp_lines.append(_format_hypothesis_table_row(h))
     hyp_lines.append("\n## Detail\n")
     for h in registry.get("hypotheses", []):
-        hyp_lines.append(f"### {h['id']} — {h['status']}\n")
-        hyp_lines.append(f"{h.get('summary', '')}\n")
-        hyp_lines.append(f"- **Evidence:** {h.get('evidence', '')}\n")
-        hyp_lines.append(f"- **Updated:** {h.get('updated', '')}\n")
+        hyp_lines.extend(_format_hypothesis_detail(h))
 
-    (DOCS / "hypotheses.md").write_text("\n".join(hyp_lines), encoding="utf-8")
+    _write_doc(DOCS / "hypotheses.md", hyp_lines)
 
     rm = registry.get("roadmap", {})
     road_lines = [
@@ -202,7 +296,9 @@ def sync_docs(registry: dict[str, Any] | None = None) -> None:
         road_lines.append(f"- {item}")
     road_lines.append("")
 
-    (DOCS / "research_roadmap.md").write_text("\n".join(road_lines), encoding="utf-8")
+    _write_doc(DOCS / "research_roadmap.md", road_lines)
+    _write_doc(ROOT_RESEARCH_ROADMAP, road_lines)
+    _write_journal(registry)
 
 
 def bootstrap_from_reports() -> None:

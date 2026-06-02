@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-06-02T17:04:22+00:00",
+  "updated": "2026-06-02T18:38:50+00:00",
   "findings": [
     {
       "category": "CONFIRMED",
@@ -193,6 +193,14 @@
       "evidence": "Short sentiment history; not deployable",
       "source": "directional_edge_report.md",
       "recorded": "2026-06-02T17:04:22+00:00"
+    },
+    {
+      "category": "REJECTED",
+      "statement": "No alternative free data source produced economically viable directional edge after fees.",
+      "confidence": "High",
+      "evidence": "Best config move_only_baseline; all ci_low_bps <= 0",
+      "source": "directional_edge_report.md",
+      "recorded": "2026-06-02T18:38:50+00:00"
     }
   ],
   "hypotheses": [

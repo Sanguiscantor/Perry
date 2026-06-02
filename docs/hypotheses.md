@@ -1,6 +1,6 @@
 # Hypotheses — Perry
 
-**Last updated:** 2026-06-02T17:04:22+00:00
+**Last updated:** 2026-06-02T18:38:50+00:00
 
 | ID | Status | Summary | Source |
 | --- | --- | --- | --- |
@@ -24,7 +24,6 @@
 Move/vol-expansion is predictable from causal OHLCV.
 
 - **Evidence:** 
-
 - **Updated:** None
 
 ### H002 — REJECTED
@@ -32,7 +31,6 @@ Move/vol-expansion is predictable from causal OHLCV.
 TSFresh adds OOS move signal.
 
 - **Evidence:** 
-
 - **Updated:** None
 
 ### H003 — REJECTED
@@ -40,7 +38,6 @@ TSFresh adds OOS move signal.
 Direction is profitable after fees with current features.
 
 - **Evidence:** 
-
 - **Updated:** None
 
 ### H004 — CONFIRMED
@@ -48,7 +45,6 @@ Direction is profitable after fees with current features.
 BTC contemporaneously co-moves with alts on 15m.
 
 - **Evidence:** ETH 1-bar lead ~0
-
 - **Updated:** 2026-06-02T16:39:36+00:00
 
 ### H005 — REJECTED
@@ -56,7 +52,6 @@ BTC contemporaneously co-moves with alts on 15m.
 Discrete regime labels are stable over time.
 
 - **Evidence:** 
-
 - **Updated:** None
 
 ### H006 — REJECTED
@@ -64,7 +59,6 @@ Discrete regime labels are stable over time.
 Funding alone insufficient at 15m merge.
 
 - **Evidence:** Lift -0.0020
-
 - **Updated:** 2026-06-02T16:38:41+00:00
 
 ### H007 — REJECTED
@@ -72,7 +66,6 @@ Funding alone insufficient at 15m merge.
 OI alone insufficient at 15m merge.
 
 - **Evidence:** Lift -0.0020
-
 - **Updated:** 2026-06-02T16:38:41+00:00
 
 ### H008 — REJECTED
@@ -80,7 +73,6 @@ OI alone insufficient at 15m merge.
 Cross-asset features redundant with single-asset OHLCV for move OOS.
 
 - **Evidence:** Lift -0.0039
-
 - **Updated:** 2026-06-02T16:39:36+00:00
 
 ### H009 — UNTESTED
@@ -88,7 +80,6 @@ Cross-asset features redundant with single-asset OHLCV for move OOS.
 NSE/macro internals transfer to crypto.
 
 - **Evidence:** 
-
 - **Updated:** None
 
 ### H010 — UNTESTED
@@ -96,7 +87,6 @@ NSE/macro internals transfer to crypto.
 Options IV/skew improves move timing.
 
 - **Evidence:** 
-
 - **Updated:** None
 
 ### H011 — REJECTED
@@ -104,7 +94,6 @@ Options IV/skew improves move timing.
 Taker flow features enable profitable direction.
 
 - **Evidence:** Net -4.19 bps taker-only
-
 - **Updated:** 2026-06-02T17:04:22+00:00
 
 ### H012 — REJECTED
@@ -112,5 +101,4 @@ Taker flow features enable profitable direction.
 Crowding (global L/S) enables profitable direction on full history.
 
 - **Evidence:** Net -6.54 bps
-
 - **Updated:** 2026-06-02T17:04:22+00:00

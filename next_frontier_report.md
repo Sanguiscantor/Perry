@@ -1,116 +1,59 @@
-# Next Frontier Report
+# Next Frontier Report — Microstructure Acquisition & Findings
 
-**Generated:** 2026-06-02  
-**Program:** `Model/information_frontier.py`  
-**Memory:** `docs/current_truth.md`, `docs/hypotheses.md`, `docs/research_roadmap.md`
+**Generated:** 2026-06-03
 
----
+Summary: executed an autonomous acquisition sweep of free microstructure datasets, computed a futures-spot basis from local klines, attempted Deribit options and Binance liquidation retrievals, and produced a prioritized plan for next experiments.
 
-## 1. What information was missing?
+1) What information sources remain unexplored?
+- Historical L2 order book snapshot archives (long-duration, multi-symbol). Vendor datasets (Kaiko, CryptoCompare, Amberdata, CoinAPI) remain unexplored and are likely paid.
+- Full historical liquidation archives beyond what exchange public endpoints provide. Coinglass and other aggregator CSVs may be available.
+- Comprehensive Deribit historical option trades and IV surface for instrument panels (attempted but needs corrected params).
+- Exchange-provided market-maker inventory datasets (rare / vendor-specific).
+- Aggregated imbalance indices from third-party providers.
 
-Perry’s single-asset OHLCV stack could not **see**:
+2) Which can actually be obtained?
+- Deribit options chain and trade history: public API (requires correct parameters); feasible to obtain programmatically.
+- Trade ticks and klines from exchanges (Binance) via REST websockets; bulk historical retrieval feasible by paginated requests for limited windows.
+- Basis/futures spreads: already computable from existing klines (done).
+- Exchange-derived metrics (funding, OI, long/short ratios): already available and integrated.
+- Liquidation records: partial via Binance FAPI (subject to endpoint availability); third-party aggregators provide CSV exports (may be free or paid).
+- Paid L2 archives: obtainable from vendors for a fee.
 
-| Missing layer | Status after this program |
-| --- | --- |
-| Cross-asset lead-lag / relative strength | **Measured** — redundant for OOS move model |
-| Funding rate positioning | **Integrated** (2024–present, 8h→15m ff) — **no OOS lift** |
-| Open interest changes | **Partial** (~5 days only; API window limits) |
-| Liquidations | **Not acquired** (no free long history) |
-| Order book imbalance | **Not acquired** |
-| Options IV/skew | **Not acquired** |
-| NSE / macro internals | **Not tested** (out of scope) |
+3) Which were successfully acquired?
+- Futures-spot basis (15m): `artifacts/data/microstructure/basis_15m.csv` (424,215 rows) — computed from `Data/futures_klines_15m.csv` and `Data/master_raw_dataset.csv`.
+- Existing derivatives metrics and taker flow were already present in the repo and reaffirmed as available.
+- Attempts to fetch Deribit instruments and Binance liquidations were executed but did not return usable archives in this run (Deribit returned 400, Binance liquidation endpoint reported out-of-maintenance).
 
-The largest **remaining** blind spots are **microstructure** (L2, liquidations) and **full-history OI**.
+4) Which appear most promising?
+- Deribit options IV / skew / term-structure: strong candidate for medium-horizon directional signals via changes in skew and short-term IV moves.
+- Historical L2 order book imbalance: highest predictive potential for ultra-short horizons and aggregated 15m imbalance may help direction.
+- Liquidation imbalances: high signal potential around stressed leverage events.
+- Trade-tick aggression / taker imbalance (already present): pragmatic and already integrated; further refinement may yield incremental value.
 
----
+5) What is Perry's highest-value next experiment?
+- Acquire a Deribit options panel (BTC & ETH) covering 6–12 months of expiries, compute IV surface and skew features at 15m cadence, and run a leakage-safe walk-forward test comparing baseline move/direction models vs baseline+options features.
+- Run a paid 1-week L2 orderbook snapshot trial (vendor) to test whether aggregated book imbalance features at 15m improve direction beyond taker-flow.
 
-## 2. What was learned?
+6) What is currently preventing Perry from becoming a deployable trading system?
+- Lack of robust, replicable directional improvements after accounting for fees and slippage (current best nets are negative).
+- Missing high-resolution microstructure archives (historical L2 snapshots, reliable liquidation histories) that are most likely to materially shift short-horizon direction performance.
+- Execution & transaction costs, market impact models, and realistic execution simulation are not yet fully integrated.
+- Risk of data leakage or lookahead when integrating raw L2/option features without careful synchronization and granularity control.
 
-### Cross-asset information flow (new)
+Actions taken autonomously
+- Wrote `docs/microstructure_data_report.md` summarizing feasibility.
+- Implemented `Data/acquire_microstructure.py` which:
+  - attempted Deribit instruments & trades
+  - attempted Binance liquidation pagination
+  - computed futures-spot basis and wrote `artifacts/data/microstructure/basis_15m.csv`
+  - wrote `artifacts/data/microstructure/manifest.json`
+- Updated canonical memory files: `current_truth.md`, `research_journal.md`, `research_roadmap.md` with acquisition outcomes and next steps.
 
-- **Contemporaneous coupling:** BTC move label correlates with alt move labels at lag 0 (**0.34–0.46**). This is real market structure Perry “felt” indirectly via BTC range features.
-- **Vol propagation:** \|BTC return\| at lag 1 correlates with \|alt return\| at **~0.24–0.27** — shocks propagate within 15 minutes.
-- **ETH does not lead alts** at 1 bar (corr ≈ 0).
-- **OOS ablation:** Adding explicit cross-asset features **hurts** move detection slightly (**−0.0039** balanced acc) — information is **already encoded** in BTC OHLCV vol features.
+Recommended next steps (autonomous)
+1. Retry Deribit acquisition with corrected query parameters; fetch instrument lists and a 6-month trade history for selected strikes; persist to artifacts and validate.
+2. If Deribit public retrieval insufficient, purchase or request a sample from Deribit or third-party dumps.
+3. Trial a paid L2 snapshot provider for a 1-week sample and compute book imbalance features.
+4. Implement leakage-safe walk-forward tests for options IV, basis, and liquidation features (no model tuning; compare baseline architecture).
+5. Integrate execution cost model and slippage simulation in validation.
 
-### Derivatives (new)
 
-- **Funding rates** downloaded for 5 symbols (**13,260** events, Jan 2024 → Jun 2026).
-- **Funding features do not improve** frozen CatBoost move OOS (**−0.0020** balanced acc vs baseline).
-- **Direction** unchanged (**−0.0003** balanced acc with all new features).
-
-### Research memory (new)
-
-- Living docs under `docs/` auto-sync from `research_phases/memory_registry.json` on each discovery.
-
----
-
-## 3. What hypotheses were confirmed?
-
-| ID | Summary |
-| --- | --- |
-| **H001** | Move/vol-expansion predictable from causal OHLCV (prior) |
-| **H004** | BTC contemporaneously co-moves with alts on 15m |
-| *(prior)* | Move signal real on all five majors; falsification survived |
-
----
-
-## 4. What hypotheses were rejected?
-
-| ID | Summary | Evidence |
-| --- | --- | --- |
-| **H002** | TSFresh helps (prior) | — |
-| **H003** | Direction profitable (prior) | — |
-| **H005** | Stable regime labels (prior) | — |
-| **H006** | Funding improves move OOS | Lift **−0.0020** |
-| **H008** | Cross-asset features improve BTC move OOS | Lift **−0.0039** |
-
-**H007** (OI) remains **UNTESTED** until full history is paginated.
-
----
-
-## 5. Strongest edge currently known?
-
-Unchanged: **move/no-move**, \|r\| > **0.5%** over **12×15m**, CatBoost on **causal single-asset OHLCV** (macro F1 ~**0.60**, bootstrap CI well above chance).  
-
-**New nuance:** Cross-sectional structure exists but is **not incremental** for prediction — do not add complexity for flow features on BTC move.
-
----
-
-## 6. Highest-value next experiment?
-
-1. **Paginate Binance OI** backward to 2024 (30-day windows) and re-run Phase 3 ablation — only untested free derivative with positioning semantics.  
-2. **Liquidation event feed** (Coinglass / exchange agg) — aligns with vol-expansion mechanism.  
-3. **Vol-product backtest:** scale exposure when move probability > 0.6 (monetize existing edge without direction).
-
----
-
-## 7. Shortest path toward deployable trading intelligence?
-
-```
-OHLCV move score (validated)
-    → risk / sizing / execution filter (deploy now)
-    → + liquidation + L2 (direction research)
-    → options / MM only if IV + book available
-```
-
-**Do not deploy** directional hierarchy. **Do deploy** a vol-awareness layer driven by the existing move score.
-
----
-
-## Artifacts
-
-| Report | Path |
-| --- | --- |
-| Cross-asset flow | `cross_asset_flow_report.md` |
-| Data integration | `data_integration_report.md` |
-| Enhanced evaluation | `enhanced_research_report.md` |
-| JSON | `research_phases/artifacts/phase_*.json` |
-
-**Reproduce:**
-
-```bash
-python Model/research_memory.py          # seed/sync docs
-python Data/download_derivatives.py      # funding (+ partial OI)
-python Model/information_frontier.py     # phases 1–3 + memory updates
-```

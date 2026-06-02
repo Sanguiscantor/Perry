@@ -36,3 +36,16 @@
 - 2026-06-02T17:02:31+00:00:   evaluate direction: funding_oi
 - 2026-06-02T17:02:37+00:00:   evaluate direction: cross_asset
 - 2026-06-02T17:02:39+00:00:   evaluate direction: all_alternative
+- 2026-06-02T18:32:59+00:00: Directional edge program started
+- 2026-06-02T18:32:59+00:00: Directional edge: acquiring datasets
+- 2026-06-02T18:32:59+00:00: Running download_derivatives.py
+- 2026-06-02T18:33:10+00:00: Running download_extended_klines.py
+- 2026-06-02T18:35:38+00:00: Running download_binance_sentiment.py
+- 2026-06-02T18:37:07+00:00:   evaluate direction: baseline_core
+- 2026-06-02T18:37:09+00:00:   evaluate direction: ohlcv_all
+- 2026-06-02T18:37:15+00:00:   evaluate direction: taker_flow
+- 2026-06-02T18:37:24+00:00:   evaluate direction: sentiment_only
+- 2026-06-02T18:37:30+00:00:   evaluate direction: funding_oi
+- 2026-06-02T18:37:35+00:00:   evaluate direction: cross_asset
+- 2026-06-02T18:37:37+00:00:   evaluate direction: all_alternative
+- 2026-06-02T18:38:50+00:00: Directional edge program completed
