@@ -60,3 +60,15 @@
 - 2026-06-02T15:44:51+00:00: Phase 6: data expansion ranking
 - 2026-06-02T15:44:51+00:00: Phase 7: advanced information-theoretic analysis
 - 2026-06-02T15:44:54+00:00: Research program completed
+- 2026-06-02T16:33:57+00:00: Information frontier Phase 1: cross-asset flow
+- 2026-06-02T16:35:50+00:00: Information frontier Phase 2: data integration
+- 2026-06-02T16:35:50+00:00: Information frontier Phase 3: enhanced re-evaluation
+- 2026-06-02T16:38:41+00:00: Information frontier program completed
+- 2026-06-02T17:01:44+00:00: Directional edge: evaluation only
+- 2026-06-02T17:02:10+00:00:   evaluate direction: baseline_core
+- 2026-06-02T17:02:13+00:00:   evaluate direction: ohlcv_all
+- 2026-06-02T17:02:18+00:00:   evaluate direction: taker_flow
+- 2026-06-02T17:02:26+00:00:   evaluate direction: sentiment_only
+- 2026-06-02T17:02:31+00:00:   evaluate direction: funding_oi
+- 2026-06-02T17:02:37+00:00:   evaluate direction: cross_asset
+- 2026-06-02T17:02:39+00:00:   evaluate direction: all_alternative

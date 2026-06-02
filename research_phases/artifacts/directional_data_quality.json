@@ -1,0 +1,53 @@
+{
+  "sources": [
+    {
+      "file": "funding_rates.csv",
+      "rows": 13260,
+      "btc_rows": 2652,
+      "start": "2024-01-01 00:00:00",
+      "end": "2026-06-02 16:00:00",
+      "null_pct": 0.0
+    },
+    {
+      "file": "open_interest_15m.csv",
+      "rows": 14880,
+      "btc_rows": 2976,
+      "start": "2026-05-02 17:15:00",
+      "end": "2026-06-02 17:00:00",
+      "null_pct": 0.0
+    },
+    {
+      "file": "global_long_short_15m.csv",
+      "rows": 14880,
+      "btc_rows": 2976,
+      "start": "2026-05-02 17:15:00",
+      "end": "2026-06-02 17:00:00",
+      "null_pct": 0.0
+    },
+    {
+      "file": "top_trader_long_short_15m.csv",
+      "rows": 14880,
+      "btc_rows": 2976,
+      "start": "2026-05-02 17:15:00",
+      "end": "2026-06-02 17:00:00",
+      "null_pct": 0.0
+    },
+    {
+      "file": "taker_buy_sell_15m.csv",
+      "rows": 14855,
+      "btc_rows": 2971,
+      "start": "2026-05-02 17:00:00",
+      "end": "2026-06-02 16:45:00",
+      "null_pct": 0.0
+    },
+    {
+      "file": "futures_klines_15m.csv",
+      "rows": 424180,
+      "btc_rows": 84836,
+      "start": "2024-01-01 00:00:00",
+      "end": "2026-06-02 16:45:00",
+      "null_pct": 0.0
+    }
+  ],
+  "failures": []
+}

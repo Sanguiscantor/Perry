@@ -1,0 +1,147 @@
+{
+  "ranked": [
+    {
+      "id": "taker_flow_klines",
+      "name": "Taker buy/sell flow (futures klines)",
+      "info_gain": 9,
+      "history": 10,
+      "cost": 10,
+      "acquisition": 9,
+      "direction_prob": 8,
+      "notes": "Full history since 2024; true microstructure proxy",
+      "composite": 8.95
+    },
+    {
+      "id": "taker_agg_ratio",
+      "name": "Aggregated taker buy/sell ratio (Binance)",
+      "info_gain": 8,
+      "history": 4,
+      "cost": 10,
+      "acquisition": 8,
+      "direction_prob": 7,
+      "notes": "~30-90d paginated 15m",
+      "composite": 7.3
+    },
+    {
+      "id": "top_trader_ls",
+      "name": "Top trader position L/S ratio",
+      "info_gain": 8,
+      "history": 4,
+      "cost": 10,
+      "acquisition": 8,
+      "direction_prob": 7,
+      "notes": "Smart-money positioning proxy",
+      "composite": 7.3
+    },
+    {
+      "id": "funding_rate",
+      "name": "Funding rate / carry",
+      "info_gain": 7,
+      "history": 9,
+      "cost": 10,
+      "acquisition": 9,
+      "direction_prob": 5,
+      "notes": "Full history; already tested weak for move",
+      "composite": 7.3
+    },
+    {
+      "id": "cross_asset",
+      "name": "Cross-asset lead-lag",
+      "info_gain": 6,
+      "history": 10,
+      "cost": 10,
+      "acquisition": 10,
+      "direction_prob": 4,
+      "notes": "Redundant for move; test direction",
+      "composite": 7.0
+    },
+    {
+      "id": "open_interest",
+      "name": "Open interest changes",
+      "info_gain": 8,
+      "history": 4,
+      "cost": 10,
+      "acquisition": 7,
+      "direction_prob": 6,
+      "notes": "Paginated; positioning not direction alone",
+      "composite": 6.85
+    },
+    {
+      "id": "global_long_short",
+      "name": "Global long/short account ratio",
+      "info_gain": 7,
+      "history": 4,
+      "cost": 10,
+      "acquisition": 8,
+      "direction_prob": 6,
+      "notes": "Crowding; contrarian potential",
+      "composite": 6.7
+    },
+    {
+      "id": "options_iv",
+      "name": "Options IV / skew (Deribit)",
+      "info_gain": 9,
+      "history": 5,
+      "cost": 4,
+      "acquisition": 3,
+      "direction_prob": 7,
+      "notes": "Not integrated this run",
+      "composite": 6.4
+    },
+    {
+      "id": "fear_greed",
+      "name": "Crypto Fear & Greed Index",
+      "info_gain": 5,
+      "history": 7,
+      "cost": 10,
+      "acquisition": 10,
+      "direction_prob": 4,
+      "notes": "Daily only; alternative.me",
+      "composite": 6.25
+    },
+    {
+      "id": "l2_order_book",
+      "name": "L2 order book imbalance",
+      "info_gain": 10,
+      "history": 1,
+      "cost": 2,
+      "acquisition": 1,
+      "direction_prob": 9,
+      "notes": "Requires paid/tick archive",
+      "composite": 6.2
+    },
+    {
+      "id": "on_chain",
+      "name": "On-chain exchange flows",
+      "info_gain": 8,
+      "history": 6,
+      "cost": 4,
+      "acquisition": 4,
+      "direction_prob": 6,
+      "notes": "Glassnode etc. paid",
+      "composite": 6.1
+    },
+    {
+      "id": "liquidations",
+      "name": "Liquidation events",
+      "info_gain": 9,
+      "history": 2,
+      "cost": 3,
+      "acquisition": 2,
+      "direction_prob": 8,
+      "notes": "No free long history on Binance REST",
+      "composite": 6.0
+    },
+    {
+      "id": "etf_flows",
+      "name": "BTC ETF flows",
+      "info_gain": 7,
+      "history": 6,
+      "cost": 5,
+      "acquisition": 4,
+      "direction_prob": 5,
+      "notes": "Daily fund data; delayed",
+      "composite": 5.6
+    }
+  ]
+}

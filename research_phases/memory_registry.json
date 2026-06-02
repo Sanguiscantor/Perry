@@ -1,0 +1,309 @@
+{
+  "version": 1,
+  "updated": "2026-06-02T17:04:22+00:00",
+  "findings": [
+    {
+      "category": "CONFIRMED",
+      "statement": "Volatility-expansion (move) signal exists on 15m crypto OHLCV.",
+      "confidence": "High",
+      "evidence": "Macro F1 ~0.60, bootstrap CI above chance",
+      "source": "research_report.md",
+      "recorded": "2026-06-02T16:33:13+00:00"
+    },
+    {
+      "category": "CONFIRMED",
+      "statement": "Move signal survives on BTC, ETH, SOL, BNB, XRP individually.",
+      "confidence": "High",
+      "evidence": "5/5 assets pass falsification thresholds",
+      "source": "falsification_report.md",
+      "recorded": "2026-06-02T16:33:13+00:00"
+    },
+    {
+      "category": "CONFIRMED",
+      "statement": "Best target is move/no-move at 0.5% over 12 candles.",
+      "confidence": "High",
+      "evidence": "Dominates direction/multiclass in target screen",
+      "source": "research_report.md",
+      "recorded": "2026-06-02T16:33:13+00:00"
+    },
+    {
+      "category": "CONFIRMED",
+      "statement": "ATR, range, and return-variance features dominate predictors.",
+      "confidence": "High",
+      "evidence": "CatBoost importance + MI analysis",
+      "source": "information_theory_report.md",
+      "recorded": "2026-06-02T16:33:13+00:00"
+    },
+    {
+      "category": "CONFIRMED",
+      "statement": "Information bottleneck exceeds model bottleneck on OHLCV.",
+      "confidence": "High",
+      "evidence": "Optuna plateau; MI flat; direction fails with same model class",
+      "source": "grand_research_report.md",
+      "recorded": "2026-06-02T16:33:13+00:00"
+    },
+    {
+      "category": "REJECTED",
+      "statement": "TSFresh materially improves move detection.",
+      "confidence": "High",
+      "evidence": "Fold-local TSFresh below compact causal set",
+      "source": "research_report.md",
+      "recorded": "2026-06-02T16:33:13+00:00"
+    },
+    {
+      "category": "REJECTED",
+      "statement": "Additional CatBoost tuning yields meaningful gains.",
+      "confidence": "High",
+      "evidence": "Optuna +0.00001 macro F1",
+      "source": "research_log.md",
+      "recorded": "2026-06-02T16:33:13+00:00"
+    },
+    {
+      "category": "REJECTED",
+      "statement": "Current directional strategy is profitable after 5 bps.",
+      "confidence": "High",
+      "evidence": "Mean net \u22125.19 bps",
+      "source": "research_report.md",
+      "recorded": "2026-06-02T16:33:13+00:00"
+    },
+    {
+      "category": "REJECTED",
+      "statement": "Current hierarchical move\u2192direction strategy is profitable.",
+      "confidence": "High",
+      "evidence": "Mean net \u22121.63 bps; Phase 5 all thresholds negative",
+      "source": "conditional_direction_report.md",
+      "recorded": "2026-06-02T16:33:13+00:00"
+    },
+    {
+      "category": "REJECTED",
+      "statement": "Stable market regime labels persist over calendar time.",
+      "confidence": "High",
+      "evidence": "KMeans ARI \u2248 0 early vs late",
+      "source": "market_state_report.md",
+      "recorded": "2026-06-02T16:33:13+00:00"
+    },
+    {
+      "category": "PARTIAL EVIDENCE",
+      "statement": "Universal pooled model transfers to all assets including BTC.",
+      "confidence": "Medium",
+      "evidence": "BTC LOO fails (0.545) without BTC in train",
+      "source": "cross_asset_report.md",
+      "recorded": "2026-06-02T16:33:13+00:00"
+    },
+    {
+      "category": "PARTIAL EVIDENCE",
+      "statement": "State transition structure contains tradeable information.",
+      "confidence": "Low",
+      "evidence": "Descriptive move rates by state; ARI unstable",
+      "source": "state_transition_report.md",
+      "recorded": "2026-06-02T16:33:13+00:00"
+    },
+    {
+      "category": "UNTESTED",
+      "statement": "Funding rates improve move or direction prediction.",
+      "confidence": "N/A",
+      "evidence": "Not yet integrated in walk-forward",
+      "source": "data_expansion_report.md",
+      "recorded": "2026-06-02T16:33:13+00:00"
+    },
+    {
+      "category": "UNTESTED",
+      "statement": "Open interest improves move or direction prediction.",
+      "confidence": "N/A",
+      "evidence": "Not yet integrated",
+      "source": "data_expansion_report.md",
+      "recorded": "2026-06-02T16:33:13+00:00"
+    },
+    {
+      "category": "UNTESTED",
+      "statement": "Liquidations improve prediction.",
+      "confidence": "N/A",
+      "evidence": "Not yet integrated",
+      "source": "data_expansion_report.md",
+      "recorded": "2026-06-02T16:33:13+00:00"
+    },
+    {
+      "category": "UNTESTED",
+      "statement": "Order book imbalance improves prediction.",
+      "confidence": "N/A",
+      "evidence": "No historical book data",
+      "source": "data_expansion_report.md",
+      "recorded": "2026-06-02T16:33:13+00:00"
+    },
+    {
+      "category": "PARTIAL EVIDENCE",
+      "statement": "BTC move/return structure correlates with alt moves at short lags; cross-asset causal features exist.",
+      "confidence": "Medium",
+      "evidence": "Best BTC\u2192ETHUSDT move corr lag 0: 0.4615; OOS lift -0.0039 balanced acc",
+      "source": "cross_asset_flow_report.md",
+      "recorded": "2026-06-02T16:35:50+00:00"
+    },
+    {
+      "category": "REJECTED",
+      "statement": "Funding/OI (15m ffilled) do not materially improve move OOS vs OHLCV baseline.",
+      "confidence": "Medium",
+      "evidence": "Derivatives lift -0.0020",
+      "source": "enhanced_research_report.md",
+      "recorded": "2026-06-02T16:38:41+00:00"
+    },
+    {
+      "category": "REJECTED",
+      "statement": "Explicit cross-asset engineered features improve BTC move OOS beyond single-asset OHLCV.",
+      "confidence": "High",
+      "evidence": "Ablation lift -0.0039 balanced acc",
+      "source": "cross_asset_flow_report.md",
+      "recorded": "2026-06-02T16:39:36+00:00"
+    },
+    {
+      "category": "CONFIRMED",
+      "statement": "BTC move labels are contemporaneously coupled with alt move labels (corr 0.34-0.46 at lag 0).",
+      "confidence": "High",
+      "evidence": "See cross_asset_flow_report.md",
+      "source": "cross_asset_flow_report.md",
+      "recorded": "2026-06-02T16:39:36+00:00"
+    },
+    {
+      "category": "REJECTED",
+      "statement": "No alternative free data source produced economically viable directional edge after fees.",
+      "confidence": "High",
+      "evidence": "Best config move_only_baseline; all ci_low_bps <= 0",
+      "source": "directional_edge_report.md",
+      "recorded": "2026-06-02T17:04:22+00:00"
+    },
+    {
+      "category": "REJECTED",
+      "statement": "Taker buy/sell flow from futures klines improves directional economics.",
+      "confidence": "High",
+      "evidence": "Taker-only net -4.19 bps; OHLCV+taker net -5.33 bps",
+      "source": "directional_edge_report.md",
+      "recorded": "2026-06-02T17:04:22+00:00"
+    },
+    {
+      "category": "REJECTED",
+      "statement": "Binance global/top trader L/S ratios improve full-sample direction OOS.",
+      "confidence": "High",
+      "evidence": "Sentiment merge net -6.54 bps on full walk-forward",
+      "source": "directional_edge_report.md",
+      "recorded": "2026-06-02T17:04:22+00:00"
+    },
+    {
+      "category": "PARTIAL EVIDENCE",
+      "statement": "May 2026 subset shows positive direction mean net (+1.76 bps) but CI spans zero.",
+      "confidence": "Low",
+      "evidence": "Short sentiment history; not deployable",
+      "source": "directional_edge_report.md",
+      "recorded": "2026-06-02T17:04:22+00:00"
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "H001",
+      "status": "CONFIRMED",
+      "summary": "Move/vol-expansion is predictable from causal OHLCV.",
+      "evidence": "",
+      "source": "research_report.md",
+      "updated": null
+    },
+    {
+      "id": "H002",
+      "status": "REJECTED",
+      "summary": "TSFresh adds OOS move signal.",
+      "evidence": "",
+      "source": "research_report.md",
+      "updated": null
+    },
+    {
+      "id": "H003",
+      "status": "REJECTED",
+      "summary": "Direction is profitable after fees with current features.",
+      "evidence": "",
+      "source": "conditional_direction_report.md",
+      "updated": null
+    },
+    {
+      "id": "H004",
+      "status": "CONFIRMED",
+      "summary": "BTC contemporaneously co-moves with alts on 15m.",
+      "evidence": "ETH 1-bar lead ~0",
+      "source": "cross_asset_flow_report.md",
+      "updated": "2026-06-02T16:39:36+00:00"
+    },
+    {
+      "id": "H005",
+      "status": "REJECTED",
+      "summary": "Discrete regime labels are stable over time.",
+      "evidence": "",
+      "source": "market_state_report.md",
+      "updated": null
+    },
+    {
+      "id": "H006",
+      "status": "REJECTED",
+      "summary": "Funding alone insufficient at 15m merge.",
+      "evidence": "Lift -0.0020",
+      "source": "enhanced_research_report.md",
+      "updated": "2026-06-02T16:38:41+00:00"
+    },
+    {
+      "id": "H007",
+      "status": "REJECTED",
+      "summary": "OI alone insufficient at 15m merge.",
+      "evidence": "Lift -0.0020",
+      "source": "enhanced_research_report.md",
+      "updated": "2026-06-02T16:38:41+00:00"
+    },
+    {
+      "id": "H008",
+      "status": "REJECTED",
+      "summary": "Cross-asset features redundant with single-asset OHLCV for move OOS.",
+      "evidence": "Lift -0.0039",
+      "source": "cross_asset_flow_report.md",
+      "updated": "2026-06-02T16:39:36+00:00"
+    },
+    {
+      "id": "H009",
+      "status": "UNTESTED",
+      "summary": "NSE/macro internals transfer to crypto.",
+      "evidence": "",
+      "source": "data_expansion_report.md",
+      "updated": null
+    },
+    {
+      "id": "H010",
+      "status": "UNTESTED",
+      "summary": "Options IV/skew improves move timing.",
+      "evidence": "",
+      "source": "data_expansion_report.md",
+      "updated": null
+    },
+    {
+      "id": "H011",
+      "status": "REJECTED",
+      "summary": "Taker flow features enable profitable direction.",
+      "evidence": "Net -4.19 bps taker-only",
+      "source": "directional_edge_report.md",
+      "updated": "2026-06-02T17:04:22+00:00"
+    },
+    {
+      "id": "H012",
+      "status": "REJECTED",
+      "summary": "Crowding (global L/S) enables profitable direction on full history.",
+      "evidence": "Net -6.54 bps",
+      "source": "directional_edge_report.md",
+      "updated": "2026-06-02T17:04:22+00:00"
+    }
+  ],
+  "roadmap": {
+    "current_frontier": "Acquire liquidation/L2 history or deploy move-score vol product.",
+    "highest_value_unknowns": [
+      "Paid liquidation feed directional lift",
+      "L2 imbalance at 15m aggregation",
+      "Perp-spot basis intraday"
+    ],
+    "recommended_experiments": [
+      "Coinglass liquidation CSV merge",
+      "Deribit options skew panel",
+      "Move-score vol backtest (non-directional monetization)"
+    ]
+  }
+}
