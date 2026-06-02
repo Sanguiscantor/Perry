@@ -1,0 +1,85 @@
+{
+  "ranked_sources": [
+    {
+      "name": "Cross-asset returns (ETH, SOL leads)",
+      "predictive": 7,
+      "cost": 1,
+      "availability": 10,
+      "integration": 9,
+      "notes": "Already have OHLCV multi-asset; needs feature engineering",
+      "composite": 8.3
+    },
+    {
+      "name": "Funding rates",
+      "predictive": 7,
+      "cost": 2,
+      "availability": 9,
+      "integration": 9,
+      "notes": "Free from Binance futures API; regime and squeeze signal",
+      "composite": 7.949999999999999
+    },
+    {
+      "name": "Open interest",
+      "predictive": 8,
+      "cost": 3,
+      "availability": 8,
+      "integration": 8,
+      "notes": "Confirms positioning; complements move detection",
+      "composite": 7.85
+    },
+    {
+      "name": "Liquidations",
+      "predictive": 8,
+      "cost": 4,
+      "availability": 7,
+      "integration": 7,
+      "notes": "Event-driven vol expansion; aligns with Perry move thesis",
+      "composite": 7.300000000000001
+    },
+    {
+      "name": "Market breadth (alt index)",
+      "predictive": 6,
+      "cost": 2,
+      "availability": 9,
+      "integration": 8,
+      "notes": "Risk-on/off filter for move regimes",
+      "composite": 7.300000000000001
+    },
+    {
+      "name": "Long/short ratios",
+      "predictive": 6,
+      "cost": 2,
+      "availability": 8,
+      "integration": 9,
+      "notes": "Crowding proxy; weaker than OI for direction",
+      "composite": 7.3
+    },
+    {
+      "name": "Order book imbalance / depth",
+      "predictive": 9,
+      "cost": 7,
+      "availability": 6,
+      "integration": 5,
+      "notes": "Strong microstructure alpha; needs co-located feed or exchange WS",
+      "composite": 6.7
+    },
+    {
+      "name": "Options implied vol / skew",
+      "predictive": 9,
+      "cost": 8,
+      "availability": 5,
+      "integration": 4,
+      "notes": "Best forward vol ground truth; expensive data",
+      "composite": 6.1499999999999995
+    },
+    {
+      "name": "NSE market internals",
+      "predictive": 3,
+      "cost": 6,
+      "availability": 4,
+      "integration": 3,
+      "notes": "Low relevance for crypto-native Perry unless macro overlay desired",
+      "composite": 3.35
+    }
+  ]
+}

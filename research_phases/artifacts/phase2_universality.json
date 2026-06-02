@@ -1,0 +1,125 @@
+{
+  "four_train_one_test": [
+    {
+      "train_symbols": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT",
+        "BNBUSDT"
+      ],
+      "test_symbol": "XRPUSDT",
+      "macro_f1_mean": 0.5589586647905423,
+      "balanced_accuracy_mean": 0.5767911359720498,
+      "bootstrap": {
+        "balanced_accuracy": 0.5790860562813983,
+        "ci_low": 0.5637798335945982,
+        "ci_high": 0.5947852242634889,
+        "p_at_or_below_chance": 0.0,
+        "days": 319
+      },
+      "passes": true
+    }
+  ],
+  "leave_one_out": [
+    {
+      "train_symbols": [
+        "ETHUSDT",
+        "SOLUSDT",
+        "BNBUSDT",
+        "XRPUSDT"
+      ],
+      "test_symbol": "BTCUSDT",
+      "macro_f1_mean": 0.5030959789118179,
+      "balanced_accuracy_mean": 0.5451693654999211,
+      "bootstrap": {
+        "balanced_accuracy": 0.559721178526739,
+        "ci_low": 0.5468086593740129,
+        "ci_high": 0.5733186513572424,
+        "p_at_or_below_chance": 0.0,
+        "days": 319
+      },
+      "passes": false
+    },
+    {
+      "train_symbols": [
+        "BTCUSDT",
+        "SOLUSDT",
+        "BNBUSDT",
+        "XRPUSDT"
+      ],
+      "test_symbol": "ETHUSDT",
+      "macro_f1_mean": 0.6002068251779749,
+      "balanced_accuracy_mean": 0.6020181237878405,
+      "bootstrap": {
+        "balanced_accuracy": 0.6035233657469123,
+        "ci_low": 0.5886792571826536,
+        "ci_high": 0.6181043649251428,
+        "p_at_or_below_chance": 0.0,
+        "days": 319
+      },
+      "passes": true
+    },
+    {
+      "train_symbols": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "BNBUSDT",
+        "XRPUSDT"
+      ],
+      "test_symbol": "SOLUSDT",
+      "macro_f1_mean": 0.5766040985834442,
+      "balanced_accuracy_mean": 0.5785632016695261,
+      "bootstrap": {
+        "balanced_accuracy": 0.582756008138086,
+        "ci_low": 0.566952146532888,
+        "ci_high": 0.5975717363618807,
+        "p_at_or_below_chance": 0.0,
+        "days": 319
+      },
+      "passes": true
+    },
+    {
+      "train_symbols": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT",
+        "XRPUSDT"
+      ],
+      "test_symbol": "BNBUSDT",
+      "macro_f1_mean": 0.582975061920607,
+      "balanced_accuracy_mean": 0.5957348893457777,
+      "bootstrap": {
+        "balanced_accuracy": 0.6087862611470823,
+        "ci_low": 0.5941151391328664,
+        "ci_high": 0.6223811745285004,
+        "p_at_or_below_chance": 0.0,
+        "days": 319
+      },
+      "passes": true
+    },
+    {
+      "train_symbols": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT",
+        "BNBUSDT"
+      ],
+      "test_symbol": "XRPUSDT",
+      "macro_f1_mean": 0.5589586647905423,
+      "balanced_accuracy_mean": 0.5767911359720498,
+      "bootstrap": {
+        "balanced_accuracy": 0.5790860562813983,
+        "ci_low": 0.5625824476972184,
+        "ci_high": 0.5948229259368635,
+        "p_at_or_below_chance": 0.0,
+        "days": 319
+      },
+      "passes": true
+    }
+  ],
+  "decision_b": {
+    "generalized": true,
+    "passing_loo_tests": 4,
+    "btc_specific": false
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "methods": {
+    "kmeans_3": {
+      "silhouette": 0.2301927597406023,
+      "stability_ari_early_vs_late": -0.0011156267400486914,
+      "cluster_sizes": {
+        "0": 51491,
+        "1": 27573,
+        "2": 5754
+      }
+    },
+    "kmeans_4": {
+      "silhouette": 0.23575594096772817,
+      "stability_ari_early_vs_late": 0.00017045230730367835,
+      "cluster_sizes": {
+        "0": 4963,
+        "1": 25748,
+        "2": 5626,
+        "3": 48481
+      }
+    },
+    "kmeans_5": {
+      "silhouette": 0.23243553546339596,
+      "stability_ari_early_vs_late": -0.0019449277992386637,
+      "cluster_sizes": {
+        "0": 11634,
+        "1": 4814,
+        "2": 46678,
+        "3": 17540,
+        "4": 4152
+      }
+    },
+    "kmeans_6": {
+      "silhouette": 0.20537758058283873,
+      "stability_ari_early_vs_late": -0.0033030210561829985,
+      "cluster_sizes": {
+        "0": 4137,
+        "1": 15262,
+        "2": 8041,
+        "3": 12672,
+        "4": 41160,
+        "5": 3546
+      }
+    },
+    "gmm_3": {
+      "silhouette": 0.17119745688214327,
+      "stability_ari_early_vs_late": 0.000880210272324041
+    },
+    "gmm_4": {
+      "silhouette": 0.11159693700735945,
+      "stability_ari_early_vs_late": 0.004464280736921634
+    },
+    "gmm_5": {
+      "silhouette": 0.08202965203212509,
+      "stability_ari_early_vs_late": 0.005267255311132708
+    },
+    "hmm": {
+      "skipped": "hmmlearn not installed"
+    },
+    "hdbscan": {
+      "skipped": "hdbscan not installed"
+    }
+  },
+  "best_method": "kmeans_4",
+  "decision_c": {
+    "stable_states": true,
+    "best_silhouette": 0.23575594096772817
+  }
+}

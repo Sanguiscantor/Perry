@@ -1,0 +1,26 @@
+# Perry Research Program Log
+
+- 2026-06-02T15:23:49+00:00: Research program started
+- 2026-06-02T15:23:49+00:00: Phase 1: falsification — cross-asset, holdout, regimes
+- 2026-06-02T15:24:26+00:00:   BTCUSDT: balanced=0.6069 pass=True
+- 2026-06-02T15:25:03+00:00:   ETHUSDT: balanced=0.6038 pass=True
+- 2026-06-02T15:25:41+00:00:   SOLUSDT: balanced=0.5788 pass=True
+- 2026-06-02T15:26:18+00:00:   BNBUSDT: balanced=0.6101 pass=True
+- 2026-06-02T15:26:56+00:00:   XRPUSDT: balanced=0.6073 pass=True
+- 2026-06-02T15:27:39+00:00: Phase 2: universality — pooled train / held-out asset
+- 2026-06-02T15:29:51+00:00:   train=4 majors test=XRP: balanced=0.5768
+- 2026-06-02T15:32:05+00:00:   LOO test=BTCUSDT: balanced=0.5452
+- 2026-06-02T15:34:17+00:00:   LOO test=ETHUSDT: balanced=0.6020
+- 2026-06-02T15:36:30+00:00:   LOO test=SOLUSDT: balanced=0.5786
+- 2026-06-02T15:38:42+00:00:   LOO test=BNBUSDT: balanced=0.5957
+- 2026-06-02T15:40:53+00:00:   LOO test=XRPUSDT: balanced=0.5768
+- 2026-06-02T15:41:17+00:00: Phase 3: market state discovery
+- 2026-06-02T15:41:55+00:00: Research program started (from_phase=3)
+- 2026-06-02T15:42:19+00:00: Phase 3: market state discovery
+- 2026-06-02T15:42:24+00:00: Research program started (from_phase=3)
+- 2026-06-02T15:42:48+00:00: Phase 3: market state discovery
+- 2026-06-02T15:42:58+00:00: Phase 4: state transition matrices
+- 2026-06-02T15:42:58+00:00: Phase 5: conditional direction given move probability
+- 2026-06-02T15:44:51+00:00: Phase 6: data expansion ranking
+- 2026-06-02T15:44:51+00:00: Phase 7: advanced information-theoretic analysis
+- 2026-06-02T15:44:54+00:00: Research program completed

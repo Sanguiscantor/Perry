@@ -1,0 +1,105 @@
+{
+  "top_mutual_information": [
+    {
+      "feature": "atr_14",
+      "mutual_information": 0.05091509829029328
+    },
+    {
+      "feature": "range_mean_4",
+      "mutual_information": 0.045099135032914184
+    },
+    {
+      "feature": "return_std_8",
+      "mutual_information": 0.04492180481516184
+    },
+    {
+      "feature": "return_var_8",
+      "mutual_information": 0.0449109415488147
+    },
+    {
+      "feature": "range_mean_12",
+      "mutual_information": 0.04418678149002986
+    },
+    {
+      "feature": "return_std_24",
+      "mutual_information": 0.039716147266993795
+    },
+    {
+      "feature": "return_var_24",
+      "mutual_information": 0.03970598751491572
+    },
+    {
+      "feature": "range_mean_8",
+      "mutual_information": 0.039419395682390945
+    },
+    {
+      "feature": "range_mean_24",
+      "mutual_information": 0.0370985996512323
+    },
+    {
+      "feature": "return_var_96",
+      "mutual_information": 0.03693864682013648
+    },
+    {
+      "feature": "return_std_96",
+      "mutual_information": 0.03687967936066916
+    },
+    {
+      "feature": "return_std_12",
+      "mutual_information": 0.03634528754269839
+    },
+    {
+      "feature": "return_var_12",
+      "mutual_information": 0.03630463971213316
+    },
+    {
+      "feature": "bollinger_width",
+      "mutual_information": 0.034948572452408344
+    },
+    {
+      "feature": "range_pct",
+      "mutual_information": 0.0345761545557246
+    },
+    {
+      "feature": "range_mean_96",
+      "mutual_information": 0.03304608643091678
+    },
+    {
+      "feature": "return_std_48",
+      "mutual_information": 0.03185103849155113
+    },
+    {
+      "feature": "return_var_48",
+      "mutual_information": 0.031816107960438655
+    },
+    {
+      "feature": "range_mean_48",
+      "mutual_information": 0.031813026990290316
+    },
+    {
+      "feature": "return_std_192",
+      "mutual_information": 0.029195332497907067
+    },
+    {
+      "feature": "return_var_192",
+      "mutual_information": 0.02919065936602805
+    },
+    {
+      "feature": "breakout_distance_4",
+      "mutual_information": 0.026228396033881163
+    },
+    {
+      "feature": "return_var_4",
+      "mutual_information": 0.024571025805229185
+    },
+    {
+      "feature": "return_std_4",
+      "mutual_information": 0.02451643876329279
+    },
+    {
+      "feature": "log_return_1",
+      "mutual_information": 0.02341656581742879
+    }
+  ],
+  "mean_mi": 0.013049182534580761
+}

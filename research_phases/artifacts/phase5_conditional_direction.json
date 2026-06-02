@@ -1,0 +1,56 @@
+{
+  "hierarchical_conditional": [
+    {
+      "threshold": 0.4,
+      "n": 19732,
+      "balanced_accuracy": 0.5142946769811668,
+      "mean_net_return_bps": -4.1723783247297765,
+      "ci_net_low_bps": -5.394548433125647,
+      "passes": false
+    },
+    {
+      "threshold": 0.5,
+      "n": 12657,
+      "balanced_accuracy": 0.5177166108018245,
+      "mean_net_return_bps": -3.8493990017182793,
+      "ci_net_low_bps": -5.595070653491814,
+      "passes": false
+    },
+    {
+      "threshold": 0.55,
+      "n": 9212,
+      "balanced_accuracy": 0.5246197428720001,
+      "mean_net_return_bps": -2.831484938932213,
+      "ci_net_low_bps": -4.983399802234802,
+      "passes": false
+    },
+    {
+      "threshold": 0.6,
+      "n": 6279,
+      "balanced_accuracy": 0.5216681891007258,
+      "mean_net_return_bps": -3.59929227800993,
+      "ci_net_low_bps": -6.517145763422508,
+      "passes": false
+    },
+    {
+      "threshold": 0.65,
+      "n": 4100,
+      "balanced_accuracy": 0.5251064918519232,
+      "mean_net_return_bps": -3.3818923722619685,
+      "ci_net_low_bps": -7.271657383382828,
+      "passes": false
+    },
+    {
+      "threshold": 0.7,
+      "n": 2556,
+      "balanced_accuracy": 0.537291131549148,
+      "mean_net_return_bps": -1.2998161467353402,
+      "ci_net_low_bps": -6.6645875307141615,
+      "passes": false
+    }
+  ],
+  "decision_d": {
+    "direction_viable": false,
+    "best_threshold": 0.7
+  }
+}
