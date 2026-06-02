@@ -8,11 +8,12 @@ from tsfresh import extract_features, select_features
 
 WINDOW_SIZE = 96
 SAMPLE_LIMIT = 40000
-HORIZON = 72
-N_JOBS = 12
+HORIZON = 24
+N_JOBS = 20
 
 VALUE_COLUMNS = ["Open", "High", "Low", "Close", "Volume"]
 META_COLUMNS = ["window_end_idx", "window_end_time", "target_d"]
+RANDOM_STATE = 42
 
 
 def load_sample_data():
@@ -43,8 +44,8 @@ def add_target_d(df):
         future_close - df["Close"]
     ) / df["Close"]
 
-    bullish_threshold = 0.0075
-    bearish_threshold = -0.0075
+    bullish_threshold = 0.004
+    bearish_threshold = -0.004
 
     bullish = future_return > bullish_threshold
     bearish = future_return < bearish_threshold
@@ -111,6 +112,25 @@ def merge_extracted_features(features, meta):
 def memory_mb(frame):
 
     return frame.memory_usage(deep=True).sum() / (1024 ** 2)
+
+
+def balance_classes(frame, target_column):
+
+    class_counts = frame[target_column].value_counts()
+
+    if class_counts.empty:
+        raise ValueError("Cannot balance an empty feature-selection dataset")
+
+    samples_per_class = class_counts.min()
+
+    return (
+        frame.groupby(target_column, group_keys=False)
+        .sample(
+            n=samples_per_class,
+            random_state=RANDOM_STATE,
+        )
+        .sort_index()
+    )
 
 
 def run_benchmark():
@@ -180,13 +200,24 @@ def run_benchmark():
         print(name)
 
     selection_df = results.dropna(subset=["target_d"]).copy()
+    balanced_selection_df = balance_classes(
+        selection_df,
+        "target_d",
+    )
+
+    print("\nFeature-selection class distribution before balancing:")
+    print(selection_df["target_d"].value_counts().sort_index())
+    print("\nFeature-selection class distribution after balancing:")
+    print(balanced_selection_df["target_d"].value_counts().sort_index())
+
     X_full = (
         selection_df[feature_cols]
         .replace([np.inf, -np.inf], np.nan)
         .fillna(0)
         .copy()
     )
-    y = selection_df["target_d"]
+    X_balanced = X_full.loc[balanced_selection_df.index]
+    y_balanced = balanced_selection_df["target_d"]
 
     original_count = len(feature_cols)
 
@@ -194,8 +225,8 @@ def run_benchmark():
     selection_start = time.perf_counter()
 
     X_selected = select_features(
-        X_full,
-        y,
+        X_balanced,
+        y_balanced,
         multiclass=True,
         n_jobs=N_JOBS,
     )
@@ -249,7 +280,11 @@ def run_benchmark():
         f"Full results (with metadata): "
         f"{memory_mb(results):.2f} MB"
     )
-
+    print("=" * 50)
+    print("TARGET DISTRIBUTION")
+    print(df["target_d"].value_counts())
+    print(df["target_d"].value_counts(normalize=True).sort_index())
+    print("=" * 50)
 
 if __name__ == "__main__":
     run_benchmark()

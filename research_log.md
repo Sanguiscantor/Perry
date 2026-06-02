@@ -1,0 +1,38 @@
+# Research Log
+
+- 2026-06-02: Created `snapshot/pre-research-20260602-184454` at `be801da` and copied the two pre-existing dirty research scripts to `backups/pre-research-20260602-184454`.
+- 2026-06-02: Audited existing pipelines. The saved TSFresh-selected column list was selected against the complete 40k labeled sample and is not valid as clean out-of-sample evidence.
+- 2026-06-02: Audited `Model/features_data/market_structure.py`. Existing swing and rejection routines inspect candles after the evaluated timestamp, so they are excluded from predictive research.
+- 2026-06-02: Added a separate causal research engine with purged chronological walk-forward evaluation and per-experiment artifacts.
+- 2026-06-02: Used a local pickle feature cache to avoid adding an unnecessary Parquet runtime dependency.
+- 2026-06-02: Completed 126 broad target-screen experiments with four purged chronological folds. Short-horizon move detection is the strongest baseline family; direction is weakly above chance and multiclass direction is weaker.
+- 2026-06-02: Compared eight model families across four causal feature sets for the best move target. CatBoost with all or fold-local top-100 features is strongest; XGBoost and histogram boosting collapse toward one class and are rejected.
+- 2026-06-02: Normalized multiclass prediction shape handling after CatBoost returned column-shaped predictions.
+- 2026-06-02: Added randomized CatBoost tuning and a chronological hierarchical move-then-direction evaluation mode.
+- 2026-06-02: Added SVM, soft voting, chronological inner-holdout stacking, and fold-local TSFresh subset screening modes.
+- 2026-06-02: Filtered all-null TSFresh columns inside each training fold before feature selection; TSFresh emits columns that cannot be populated by a 96-candle window.
+- 2026-06-02: Completed TSFresh subset screen. TSFresh top-1000 is weaker than the compact causal feature set. Disabled CatBoost's auxiliary file output and ignored its prior generated directory.
+- 2026-06-02: Added a reproducible report generator with top-50 ranking, daily block-bootstrap significance, economics, and feature-importance summaries.
+- 2026-06-02: Removed the report generator's optional `tabulate` dependency by rendering Markdown tables directly.
+- 2026-06-02: Installed Optuna, added Bayesian CatBoost tuning, and added calibration PNG persistence plus retrospective plot generation.
+- 2026-06-02: Completed 15 Optuna trials. Best macro F1 improved only from 0.600918 to 0.600929, confirming a tuning plateau. Generated the final report, 181 calibration plots, and a research dependency manifest.
+- 2026-06-02T13:22:08+00:00: Built causal feature cache with 84740 rows and 135 features.
+- 2026-06-02T13:22:17+00:00: Starting broad target screen with 126 configurations and 4 folds.
+- 2026-06-02T13:31:02+00:00: Completed broad target screen.
+- 2026-06-02T13:31:46+00:00: Starting model comparison with 32 configurations for move h=12 threshold=0.005.
+- 2026-06-02T13:34:17+00:00: Completed model comparison.
+- 2026-06-02T13:34:30+00:00: Starting model comparison with 32 configurations for direction h=12 threshold=None.
+- 2026-06-02T13:37:05+00:00: Completed model comparison.
+- 2026-06-02T13:37:15+00:00: Starting model comparison with 32 configurations for multiclass h=12 threshold=0.004.
+- 2026-06-02T13:38:25+00:00: Starting model comparison with 32 configurations for multiclass h=12 threshold=0.004.
+- 2026-06-02T13:42:00+00:00: Completed model comparison.
+- 2026-06-02T13:43:34+00:00: Starting randomized CatBoost move-target search with 20 trials.
+- 2026-06-02T13:49:04+00:00: Completed randomized CatBoost move-target search.
+- 2026-06-02T13:49:53+00:00: Completed hierarchical move-then-direction evaluation.
+- 2026-06-02T13:51:26+00:00: Starting advanced-model comparison with 9 configurations.
+- 2026-06-02T14:18:42+00:00: Completed advanced-model comparison.
+- 2026-06-02T14:19:24+00:00: Loading causal rolling-window TSFresh matrix for fold-local subset screen.
+- 2026-06-02T14:20:00+00:00: Loading causal rolling-window TSFresh matrix for fold-local subset screen.
+- 2026-06-02T14:23:02+00:00: Completed fold-local TSFresh feature screen.
+- 2026-06-02T14:30:24+00:00: Starting Optuna Bayesian CatBoost move-target search with 15 trials.
+- 2026-06-02T14:33:12+00:00: Completed Optuna search. Best macro F1: 0.600929; params: {'iterations': 420, 'depth': 4, 'learning_rate': 0.023404527272255594, 'l2_leaf_reg': 5.475344508142733, 'random_strength': 0.660228740609402}.

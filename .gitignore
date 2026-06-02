@@ -14,6 +14,11 @@ venv/
 
 outputs/
 logs/
+backups/
+experiments/
+results/
+models/
+catboost_info/
 
 .vscode/
 
