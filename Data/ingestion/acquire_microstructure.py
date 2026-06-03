@@ -20,8 +20,8 @@ from typing import List
 import pandas as pd
 import requests
 
-ROOT = Path(__file__).resolve().parent
-ARTIFACT_DIR = ROOT.parent / "artifacts" / "data" / "microstructure"
+ROOT = Path(__file__).resolve().parents[2]
+ARTIFACT_DIR = ROOT / "artifacts" / "data" / "microstructure"
 ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
 
 DERIBIT_API = "https://www.deribit.com/api/v2"
@@ -98,8 +98,8 @@ def attempt_binance_liquidations(symbols: List[str]) -> pd.DataFrame:
 
 def compute_basis() -> pd.DataFrame:
     """Compute futures - spot basis using existing local CSVs if available."""
-    fut_path = ROOT.parent / "Data" / "futures_klines_15m.csv"
-    spot_path = ROOT.parent / "Data" / "master_raw_dataset.csv"
+    fut_path = ROOT / "datasets" / "raw" / "futures_klines_15m.csv"
+    spot_path = ROOT / "datasets" / "raw" / "master_raw_dataset.csv"
     if not fut_path.exists() or not spot_path.exists():
         print("Required kline files missing; skipping basis computation.")
         return pd.DataFrame()

@@ -8,8 +8,8 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-MULTI_PATH = ROOT / "Data" / "multi_asset_dataset.csv"
-DERIV_DIR = ROOT / "Data" / "derivatives"
+MULTI_PATH = ROOT / "Data" / "datasets" / "raw" / "multi_asset_dataset.csv"
+DERIV_DIR = ROOT / "Data" / "datasets" / "raw" / "derivatives"
 
 ALTS = ["ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"]
 LAGS = [1, 2, 4, 8, 12]

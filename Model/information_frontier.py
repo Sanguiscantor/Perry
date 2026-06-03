@@ -210,11 +210,11 @@ def _mi_new_features(btc_raw: pd.DataFrame, enhanced: pd.DataFrame, base: pd.Dat
 
 def phase2_data_integration() -> dict[str, Any]:
     log("Information frontier Phase 2: data integration")
-    deriv_dir = ROOT / "Data" / "derivatives"
+    deriv_dir = ROOT / "Data" / "datasets" / "raw" / "derivatives"
     if not (deriv_dir / "funding_rates.csv").exists():
         log("Downloading derivatives from Binance public API...")
         import subprocess
-        subprocess.run([sys.executable, str(ROOT / "Data" / "download_derivatives.py")], check=False)
+        subprocess.run([sys.executable, str(ROOT / "Data" / "ingestion" / "download_derivatives.py")], check=False)
     report: dict[str, Any] = {"sources": [], "integrated": False}
 
     funding_path = deriv_dir / "funding_rates.csv"

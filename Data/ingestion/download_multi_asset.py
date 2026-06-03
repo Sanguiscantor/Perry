@@ -7,10 +7,12 @@ from pathlib import Path
 import pandas as pd
 from binance.client import Client
 
+ROOT = Path(__file__).resolve().parents[1]
+
 SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"]
 INTERVAL = Client.KLINE_INTERVAL_15MINUTE
 START_DATE = "1 Jan, 2024"
-OUTPUT = Path(__file__).resolve().parent / "multi_asset_dataset.csv"
+OUTPUT = ROOT / "datasets" / "raw" / "multi_asset_dataset.csv"
 
 
 def fetch_symbol(client: Client, symbol: str) -> pd.DataFrame:

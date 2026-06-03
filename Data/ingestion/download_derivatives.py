@@ -9,8 +9,8 @@ from pathlib import Path
 import pandas as pd
 import requests
 
-ROOT = Path(__file__).resolve().parent
-OUT_DIR = ROOT / "derivatives"
+ROOT = Path(__file__).resolve().parents[1]
+OUT_DIR = ROOT / "datasets" / "raw" / "derivatives"
 SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"]
 START_MS = int(datetime(2024, 1, 1, tzinfo=timezone.utc).timestamp() * 1000)
 FAPI = "https://fapi.binance.com"

@@ -36,7 +36,7 @@ from research_program import (
     slice_symbol,
 )
 
-DERIV_DIR = ROOT / "Data" / "derivatives"
+DERIV_DIR = ROOT / "Data" / "datasets" / "raw" / "derivatives"
 FEE_BPS = 5.0
 HORIZON = 12
 ARTIFACT = "directional_edge_evaluation"
@@ -299,7 +299,7 @@ def data_quality_report() -> dict[str, Any]:
         ("global_long_short_15m.csv", DERIV_DIR),
         ("top_trader_long_short_15m.csv", DERIV_DIR),
         ("taker_buy_sell_15m.csv", DERIV_DIR),
-        ("futures_klines_15m.csv", ROOT / "Data"),
+        ("futures_klines_15m.csv", ROOT / "Data" / "datasets" / "raw"),
     ]
     for name, directory in checks:
         path = directory / name
@@ -327,9 +327,9 @@ def data_quality_report() -> dict[str, Any]:
 def run_acquisition() -> None:
     log("Directional edge: acquiring datasets")
     scripts = [
-        ROOT / "Data" / "download_derivatives.py",
-        ROOT / "Data" / "download_extended_klines.py",
-        ROOT / "Data" / "download_binance_sentiment.py",
+        ROOT / "Data" / "ingestion" / "download_derivatives.py",
+        ROOT / "Data" / "ingestion" / "download_extended_klines.py",
+        ROOT / "Data" / "ingestion" / "download_binance_sentiment.py",
     ]
     for script in scripts:
         log(f"Running {script.name}")

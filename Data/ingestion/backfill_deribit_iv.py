@@ -24,7 +24,7 @@ import json
 import requests
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 ART_DIR = ROOT / "artifacts" / "data" / "microstructure"
 ART_DIR.mkdir(parents=True, exist_ok=True)
 

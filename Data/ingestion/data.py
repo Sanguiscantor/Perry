@@ -112,7 +112,9 @@ def main():
     )
 
     output_path = (
-        Path(__file__).resolve().parent
+        Path(__file__).resolve().parents[1]
+        / "datasets"
+        / "raw"
         / "master_raw_dataset.csv"
     )
 

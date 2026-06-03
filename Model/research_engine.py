@@ -41,7 +41,7 @@ from sklearn.svm import SVC
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA_PATH = ROOT / "Data" / "master_raw_dataset.csv"
+DATA_PATH = ROOT / "Data" / "datasets" / "raw" / "master_raw_dataset.csv"
 EXPERIMENTS_DIR = ROOT / "experiments"
 RESULTS_DIR = ROOT / "results"
 REPORTS_DIR = ROOT / "reports"

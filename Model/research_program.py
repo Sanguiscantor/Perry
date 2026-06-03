@@ -53,8 +53,8 @@ from research_engine import (  # noqa: E402
 PHASE_DIR = ROOT / "research_phases"
 ARTIFACTS = ROOT / "artifacts"
 LOG_PATH = ROOT / "research_program_log.md"
-MULTI_ASSET_PATH = ROOT / "Data" / "multi_asset_dataset.csv"
-BTC_ONLY_PATH = ROOT / "Data" / "master_raw_dataset.csv"
+MULTI_ASSET_PATH = ROOT / "Data" / "datasets" / "raw" / "multi_asset_dataset.csv"
+BTC_ONLY_PATH = ROOT / "Data" / "datasets" / "raw" / "master_raw_dataset.csv"
 
 SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"]
 SYMBOL_SHORT = {s: s.replace("USDT", "") for s in SYMBOLS}

@@ -128,6 +128,7 @@ def main():
     }).sort_values("importance", ascending=False)
 
     print("\nTop 50 trade classifier feature importances:")
+
     for _, row in importance.head(50).iterrows():
         print(f"{row['importance']:.6f}  {row['feature']}")
 

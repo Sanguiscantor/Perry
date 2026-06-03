@@ -171,7 +171,7 @@ There is **not** enough evidence for a standalone directional trading strategy. 
 
 ## Methodology
 
-- Source: `{(ROOT / "Data" / "master_raw_dataset.csv").relative_to(ROOT)}`, {len(pd.read_csv(ROOT / "Data" / "master_raw_dataset.csv")):,} BTCUSDT 15-minute candles.
+- Source: `{(ROOT / "Data" / "datasets" / "raw" / "master_raw_dataset.csv").relative_to(ROOT)}`, {len(pd.read_csv(ROOT / "Data" / "datasets" / "raw" / "master_raw_dataset.csv")):,} BTCUSDT 15-minute candles.
 - Evaluation: expanding chronological walk-forward folds only. No random train/test splits.
 - Purging: each training fold ends at least one forecast horizon before its test fold.
 - Ranking: macro F1, then balanced accuracy, then accuracy.
