@@ -11,7 +11,7 @@ import pandas as pd
 import requests
 
 ROOT = Path(__file__).resolve().parent
-OUT_PATH = ROOT / "futures_klines_15m.csv"
+OUT_PATH = ROOT / "datasets" / "raw" / "futures_klines_15m.csv"
 SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"]
 FAPI = "https://fapi.binance.com"
 START_MS = int(datetime(2024, 1, 1, tzinfo=timezone.utc).timestamp() * 1000)
@@ -61,6 +61,7 @@ def fetch_klines(symbol: str) -> pd.DataFrame:
 
 
 def main() -> None:
+    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     frames = [fetch_klines(s) for s in SYMBOLS]
     out = pd.concat(frames, ignore_index=True).sort_values(["symbol", "Datetime"])
     out.to_csv(OUT_PATH, index=False)
