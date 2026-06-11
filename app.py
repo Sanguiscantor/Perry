@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 import logging
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Iterable
+import warnings
 
+import joblib
 import numpy as np
 import pandas as pd
+from pandas.errors import PerformanceWarning
 
+from Model.research_engine import build_causal_features
 from Model.features_data.market_state_discovery import build_market_state_features
 from Model.features_data.market_structure import add_anchored_structure_features
 from Model.features_data.state_space import build_state_space_features
@@ -15,6 +20,8 @@ from Model.features_data.state_space import build_state_space_features
 
 ROOT = Path(__file__).resolve().parent
 RAW_DATA_DIR = ROOT / "Data" / "datasets" / "raw"
+PROCESSED_DATA_DIR = ROOT / "Data" / "datasets" / "processed"
+MODELS_DIR = ROOT / "models"
 DEFAULT_ASSET = "BTCUSDT"
 LOOKBACK_ROWS = 1500
 REPORT_PATH = ROOT / "prototype_report.md"
@@ -43,10 +50,15 @@ class PerryResult:
     directional_bias: str
     bullish_score: int
     bearish_score: int
+    expected_move_low: float
+    expected_move_high: float
     directional_confidence: str
     top_drivers: list[str]
     interpretation: list[str]
     diagnostics: dict[str, float | str]
+    model_path: str
+    feature_path: str
+    state_feature_path: str
 
 
 def refresh_data(asset: str = DEFAULT_ASSET) -> DataRefreshResult:
@@ -79,21 +91,72 @@ def refresh_data(asset: str = DEFAULT_ASSET) -> DataRefreshResult:
         return DataRefreshResult(status="Fallback", source="Local Cache", data_path=None, error=str(exc))
 
 
-def _latest_existing_path(candidates: Iterable[Path]) -> Path:
+def _csv_has_columns(path: Path, required: Iterable[str]) -> bool:
+    try:
+        sample = pd.read_csv(path, nrows=3)
+    except Exception:
+        return False
+    return all(column in sample.columns for column in required)
+
+
+def _latest_existing_path(candidates: Iterable[Path], required_columns: Iterable[str] | None = None) -> Path:
     existing = [path for path in candidates if path.exists()]
+    if required_columns is not None:
+        existing = [path for path in existing if _csv_has_columns(path, required_columns)]
     if not existing:
         names = ", ".join(str(path) for path in candidates)
         raise FileNotFoundError(f"No usable data source found. Checked: {names}")
     return max(existing, key=lambda path: path.stat().st_mtime)
 
 
-def load_latest_data(asset: str = DEFAULT_ASSET, lookback_rows: int = LOOKBACK_ROWS) -> pd.DataFrame:
-    data_path = _latest_existing_path(
+def discover_raw_datasets() -> list[Path]:
+    required = ["Datetime", "Open", "High", "Low", "Close", "Volume"]
+    candidates = list(RAW_DATA_DIR.rglob("*.csv")) if RAW_DATA_DIR.exists() else []
+    candidates.extend(
         [
-            RAW_DATA_DIR / "futures_klines_15m.csv",
-            RAW_DATA_DIR / "master_raw_dataset.csv",
             ROOT / "Data" / "master_raw_dataset.csv",
+            RAW_DATA_DIR / "master_raw_dataset.csv",
+            RAW_DATA_DIR / "futures_klines_15m.csv",
         ]
+    )
+    unique = []
+    for path in candidates:
+        if path not in unique and path.exists() and _csv_has_columns(path, required):
+            unique.append(path)
+    return sorted(unique, key=lambda path: path.stat().st_mtime, reverse=True)
+
+
+def ensure_raw_dataset(asset: str = DEFAULT_ASSET) -> DataRefreshResult:
+    discovered = discover_raw_datasets()
+    if discovered:
+        return DataRefreshResult(status="Cached", source="Discovered Raw Dataset", data_path=discovered[0])
+
+    result = refresh_data(asset)
+    if result.data_path and result.data_path.exists():
+        return result
+
+    discovered = discover_raw_datasets()
+    if discovered:
+        return DataRefreshResult(
+            status="Fallback",
+            source="Discovered Raw Dataset",
+            data_path=discovered[0],
+            error=result.error,
+        )
+    raise FileNotFoundError(
+        "Raw dataset is missing and automatic ingestion failed. "
+        f"Expected a CSV with OHLCV columns under {RAW_DATA_DIR}."
+    )
+
+
+def load_latest_data(
+    asset: str = DEFAULT_ASSET,
+    lookback_rows: int | None = LOOKBACK_ROWS,
+    raw_path: Path | None = None,
+) -> pd.DataFrame:
+    data_path = raw_path or _latest_existing_path(
+        discover_raw_datasets(),
+        required_columns=["Datetime", "Open", "High", "Low", "Close", "Volume"],
     )
 
     df = pd.read_csv(data_path, parse_dates=["Datetime"])
@@ -111,7 +174,9 @@ def load_latest_data(asset: str = DEFAULT_ASSET, lookback_rows: int = LOOKBACK_R
     if df.empty:
         raise ValueError(f"No rows found for asset {asset} in {data_path}")
 
-    return df.tail(lookback_rows).reset_index(drop=True)
+    if lookback_rows is not None:
+        df = df.tail(lookback_rows)
+    return df.reset_index(drop=True)
 
 
 def generate_base_features(df: pd.DataFrame) -> pd.DataFrame:
@@ -190,6 +255,45 @@ def _driver_scores(row: pd.Series) -> dict[str, float]:
     }
 
 
+def _human_drivers(row: pd.Series, bias: str) -> list[str]:
+    drivers: list[str] = []
+    equilibrium_distance = _last_number(row, "equilibrium_distance_pct_50")
+    compression_energy = _last_number(row, "compression_energy_50")
+    trend_slope = _last_number(row, "trend_slope_50")
+    support_confluence = bool(row.get("confluence_to_support_50", False))
+    resistance_confluence = bool(row.get("confluence_to_resistance_50", False))
+    support_distance = _last_number(row, "distance_to_support_50")
+    resistance_distance = _last_number(row, "distance_to_resistance_50")
+
+    if equilibrium_distance > 0:
+        drivers.append("Above equilibrium")
+    elif equilibrium_distance < 0:
+        drivers.append("Below equilibrium")
+
+    if compression_energy > 0.05:
+        drivers.append("Compression release")
+    if support_confluence or support_distance > resistance_distance:
+        drivers.append("Structure support intact")
+    if resistance_confluence:
+        drivers.append("Resistance overhead")
+    if trend_slope > 0:
+        drivers.append("Positive trend geometry")
+    elif trend_slope < 0:
+        drivers.append("Negative trend geometry")
+
+    fallback = [
+        "State-space regime active",
+        "Geometry features aligned",
+        f"{bias} directional pressure",
+    ]
+    for item in fallback:
+        if len(drivers) >= 4:
+            break
+        if item not in drivers:
+            drivers.append(item)
+    return drivers[:4]
+
+
 def determine_market_state(feature_df: pd.DataFrame) -> tuple[str, str, str, dict[str, float | str]]:
     row = feature_df.iloc[-1]
     compression_ratio = _last_number(row, "compression_ratio_50", 1.0)
@@ -232,6 +336,138 @@ def run_move_prediction(feature_df: pd.DataFrame, market_state: str) -> int:
         score += 6.0
 
     return _bounded_percent(score)
+
+
+def discover_feature_path(asset: str = DEFAULT_ASSET) -> Path:
+    return PROCESSED_DATA_DIR / f"{asset.lower()}_causal_features.pkl"
+
+
+def discover_state_feature_path(asset: str = DEFAULT_ASSET) -> Path:
+    return PROCESSED_DATA_DIR / f"{asset.lower()}_state_space_features.csv"
+
+
+def ensure_feature_dataset(raw: pd.DataFrame, asset: str = DEFAULT_ASSET) -> tuple[pd.DataFrame, Path, str]:
+    path = discover_feature_path(asset)
+    if path.exists():
+        features = pd.read_pickle(path)
+        return features, path, "cached"
+
+    PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", PerformanceWarning)
+        features = build_causal_features(raw)
+    features.to_pickle(path)
+    features.to_csv(path.with_suffix(".csv"), index=False)
+    return features, path, "built"
+
+
+def build_runtime_feature_frame(raw: pd.DataFrame, asset: str = DEFAULT_ASSET) -> tuple[pd.DataFrame, Path, str]:
+    path = discover_state_feature_path(asset)
+    if path.exists():
+        feature_df = pd.read_csv(path, parse_dates=["Datetime"])
+        return feature_df, path, "cached"
+
+    base = generate_base_features(raw)
+    state_space = build_state_space_features(base).add_prefix("state_space_")
+    structure = add_anchored_structure_features(base)
+    market_state_features = build_market_state_features(base, include_latent=True)
+    feature_df = pd.concat(
+        [
+            base,
+            state_space,
+            structure[
+                [
+                    "anchored_support",
+                    "anchored_resistance",
+                    "distance_to_anchored_support",
+                    "distance_to_anchored_resistance",
+                    "anchored_breakout",
+                    "anchored_breakdown",
+                ]
+            ],
+            market_state_features.drop(columns=["Datetime", "Close", "High", "Low", "Volume"], errors="ignore"),
+        ],
+        axis=1,
+    )
+    feature_df = feature_df.loc[:, ~feature_df.columns.duplicated()]
+    PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    feature_df.to_csv(path, index=False)
+    return feature_df, path, "built"
+
+
+def _model_score(row: pd.Series) -> tuple[bool, float, float]:
+    rejected = bool(row.get("rejected_for_collapse", False))
+    macro = float(row.get("macro_f1_mean", 0.0) or 0.0)
+    balanced = float(row.get("balanced_accuracy_mean", 0.0) or 0.0)
+    return (not rejected, macro, balanced)
+
+
+def discover_model() -> tuple[Any | None, Path | None, dict[str, Any]]:
+    summary_path = ROOT / "results" / "experiments.csv"
+    candidates: list[tuple[Path, dict[str, Any], tuple[bool, float, float]]] = []
+    if summary_path.exists():
+        summary = pd.read_csv(summary_path)
+        for _, row in summary.iterrows():
+            model_path = MODELS_DIR / f"{row['experiment_id']}.joblib"
+            config_path = ROOT / "experiments" / str(row["experiment_id"]) / "config.json"
+            if not model_path.exists():
+                continue
+            config = {}
+            if config_path.exists():
+                config = json.loads(config_path.read_text(encoding="utf-8"))
+            candidates.append((model_path, config, _model_score(row)))
+
+    if not candidates and MODELS_DIR.exists():
+        for model_path in MODELS_DIR.glob("*.joblib"):
+            candidates.append((model_path, {}, (True, 0.0, model_path.stat().st_mtime)))
+
+    if not candidates:
+        return None, None, {}
+
+    model_path, config, _ = max(candidates, key=lambda item: item[2])
+    return joblib.load(model_path), model_path, config
+
+
+def predict_move_with_model(
+    model: Any | None,
+    causal_features: pd.DataFrame,
+    fallback_probability: int,
+) -> tuple[int, str]:
+    if model is None:
+        return fallback_probability, "heuristic"
+    columns = list(getattr(model, "feature_names_in_", []))
+    if not columns:
+        return fallback_probability, "heuristic_no_feature_contract"
+    missing = [column for column in columns if column not in causal_features.columns]
+    if missing:
+        return fallback_probability, f"heuristic_missing_model_features:{len(missing)}"
+    row = causal_features[columns].tail(1)
+    try:
+        probabilities = model.predict_proba(row)
+        classes = list(getattr(model.named_steps.get("model"), "classes_", []))
+        if 1 in classes:
+            probability = probabilities[0, classes.index(1)] * 100.0
+        else:
+            probability = float(np.max(probabilities[0]) * 100.0)
+        return _bounded_percent(probability), "trained_model"
+    except Exception as exc:
+        logger.warning("Model prediction failed; using heuristic probability: %s", exc)
+        return fallback_probability, f"heuristic_model_error:{exc}"
+
+
+def estimate_expected_move(
+    causal_features: pd.DataFrame,
+    move_probability: int,
+    bias: str,
+    horizon: int = 12,
+) -> tuple[float, float]:
+    returns = causal_features["return_1"].tail(192).dropna()
+    realized_volatility = float(returns.std()) if not returns.empty else 0.005
+    expected_abs_move = max(realized_volatility * np.sqrt(horizon) * (0.65 + move_probability / 100.0), 0.003)
+    low = expected_abs_move * 0.70 * 100.0
+    high = expected_abs_move * 1.25 * 100.0
+    sign = -1.0 if bias == "Bearish" else 1.0
+    return sign * low, sign * high
 
 
 def estimate_directional_bias(feature_df: pd.DataFrame) -> tuple[int, int, str, str]:
@@ -307,7 +543,11 @@ def generate_report(result: PerryResult) -> str:
 - Directional Bias: {result.directional_bias}
 - Bullish Score: {result.bullish_score}%
 - Bearish Score: {result.bearish_score}%
+- Expected Move: {result.expected_move_low:+.1f}% to {result.expected_move_high:+.1f}%
 - Directional Confidence: {result.directional_confidence}
+- Model: {result.model_path}
+- Feature Dataset: {result.feature_path}
+- State Feature Dataset: {result.state_feature_path}
 
 ## Top Drivers
 
@@ -332,99 +572,56 @@ bias only; it is not a hard BUY/SELL predictor and does not claim certainty.
 
 
 def print_terminal_report(result: PerryResult) -> None:
-    print("=================================")
-    print("PERRY MARKET STATE ENGINE")
-    print("=========================")
-    print()
-    print("Asset:")
-    print(result.asset)
-    print()
-    print("Data Source:")
-    print(result.data_source)
-    print()
-    print("Last Market Timestamp:")
-    print(result.last_market_timestamp)
-    print()
-    print("Data Refresh Status:")
-    print(result.data_refresh_status)
-    print()
     print("Market State:")
     print(result.market_state)
     print()
-    print("Position:")
-    print(result.position)
+    print("Directional Bias:")
+    print(f"{result.directional_bias} {result.bullish_score if result.directional_bias != 'Bearish' else result.bearish_score}%")
     print()
-    print("Confluence:")
-    print(result.confluence)
+    print("Expected Move:")
+    print(f"{result.expected_move_low:+.1f}% to {result.expected_move_high:+.1f}%")
     print()
-    print("Move Probability:")
+    print("Confidence:")
     print(f"{result.move_probability}%")
     print()
-    print("Directional Bias:")
-    print(result.directional_bias)
-    print()
-    print("Bullish Score:")
-    print(f"{result.bullish_score}%")
-    print()
-    print("Bearish Score:")
-    print(f"{result.bearish_score}%")
-    print()
-    print("Directional Confidence:")
-    print(result.directional_confidence)
-    print()
     print("Top Drivers:")
+    for driver in result.top_drivers:
+        print(f"- {driver}")
     print()
-    for i, driver in enumerate(result.top_drivers, start=1):
-        print(f"{i}. {driver}")
+    print("Runtime:")
+    print(f"- Asset: {result.asset}")
+    print(f"- Data Source: {result.data_source}")
+    print(f"- Last Market Timestamp: {result.last_market_timestamp}")
+    print(f"- Data Status: {result.data_refresh_status}")
+    print(f"- Model: {result.model_path}")
+    print(f"- Report: {REPORT_PATH}")
     print()
-    print("Interpretation:")
-    print()
-    for line in result.interpretation:
-        print(line)
-    print()
-    print("=================================")
-    print(f"\nMarkdown report written to: {REPORT_PATH}")
 
 
 def build_proton_result(
     asset: str = DEFAULT_ASSET,
     refresh_result: DataRefreshResult | None = None,
 ) -> PerryResult:
-    raw = load_latest_data(asset=asset)
+    refresh_result = refresh_result or ensure_raw_dataset(asset)
+    raw = load_latest_data(asset=asset, lookback_rows=None, raw_path=refresh_result.data_path)
     last_market_timestamp = str(raw["Datetime"].iloc[-1])
-    base = generate_base_features(raw)
-    state_space = build_state_space_features(base).add_prefix("state_space_")
-    structure = add_anchored_structure_features(base)
-    market_state_features = build_market_state_features(base, include_latent=True)
-
-    feature_df = pd.concat(
-        [
-            base,
-            state_space,
-            structure[
-                [
-                    "anchored_support",
-                    "anchored_resistance",
-                    "distance_to_anchored_support",
-                    "distance_to_anchored_resistance",
-                    "anchored_breakout",
-                    "anchored_breakdown",
-                ]
-            ],
-            market_state_features.drop(columns=["Datetime", "Close", "High", "Low", "Volume"], errors="ignore"),
-        ],
-        axis=1,
-    )
-    feature_df = feature_df.loc[:, ~feature_df.columns.duplicated()]
+    causal_features, causal_path, causal_status = ensure_feature_dataset(raw, asset)
+    runtime_raw = raw.tail(LOOKBACK_ROWS).reset_index(drop=True)
+    feature_df, state_path, state_status = build_runtime_feature_frame(runtime_raw, asset)
 
     market_state, position, confluence, diagnostics = determine_market_state(feature_df)
-    move_probability = run_move_prediction(feature_df, market_state)
+    heuristic_probability = run_move_prediction(feature_df, market_state)
+    model, model_path, model_config = discover_model()
+    move_probability, model_status = predict_move_with_model(model, causal_features, heuristic_probability)
     bullish_score, bearish_score, confidence, bias = estimate_directional_bias(feature_df)
+    expected_low, expected_high = estimate_expected_move(
+        causal_features,
+        move_probability,
+        bias,
+        horizon=int(model_config.get("horizon", 12) or 12),
+    )
 
-    driver_scores = _driver_scores(feature_df.iloc[-1])
-    top_drivers = [
-        name for name, _ in sorted(driver_scores.items(), key=lambda item: item[1], reverse=True)[:4]
-    ]
+    top_drivers = _human_drivers(feature_df.iloc[-1], bias)
 
     interpretation = []
     interpretation.append("Large move likely." if move_probability >= 70 else "Large move possible.")
@@ -435,11 +632,14 @@ def build_proton_result(
     else:
         interpretation.append("Current state is directionally balanced.")
     interpretation.append(f"Confidence remains {confidence.lower()}.")
+    diagnostics["causal_feature_status"] = causal_status
+    diagnostics["state_feature_status"] = state_status
+    diagnostics["model_status"] = model_status
 
     return PerryResult(
         asset=asset,
-        data_source=refresh_result.source if refresh_result else "Local Cache",
-        data_refresh_status=refresh_result.status if refresh_result else "Fallback",
+        data_source=refresh_result.source,
+        data_refresh_status=refresh_result.status,
         last_market_timestamp=last_market_timestamp,
         market_state=market_state,
         position=position,
@@ -448,16 +648,21 @@ def build_proton_result(
         directional_bias=bias,
         bullish_score=bullish_score,
         bearish_score=bearish_score,
+        expected_move_low=expected_low,
+        expected_move_high=expected_high,
         directional_confidence=confidence,
         top_drivers=top_drivers,
         interpretation=interpretation,
         diagnostics=diagnostics,
+        model_path=str(model_path) if model_path else "No trained model found; heuristic fallback",
+        feature_path=str(causal_path),
+        state_feature_path=str(state_path),
     )
 
 
 def main() -> None:
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
-    refresh_result = refresh_data()
+    refresh_result = ensure_raw_dataset()
     result = build_proton_result(refresh_result=refresh_result)
     REPORT_PATH.write_text(generate_report(result), encoding="utf-8")
     print_terminal_report(result)
