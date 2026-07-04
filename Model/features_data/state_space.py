@@ -85,11 +85,23 @@ def build_gmm_state_features(
         raise ValueError("DataFrame must contain PCA latent state columns")
 
     values = df[embed_cols].fillna(0.0)
-    gmm = GaussianMixture(n_components=n_states, covariance_type="full", random_state=random_state)
-    labels = gmm.fit_predict(values)
-    probs = gmm.predict_proba(values)
-
     out = pd.DataFrame(index=df.index)
+    if len(values) < 2:
+        out["state_label"] = 0
+        out["state_prob_0"] = 1.0
+        out["state_entropy"] = 0.0
+        return out
+
+    try:
+        gmm = GaussianMixture(n_components=min(n_states, len(values)), covariance_type="full", random_state=random_state)
+        labels = gmm.fit_predict(values)
+        probs = gmm.predict_proba(values)
+    except ValueError:
+        out["state_label"] = 0
+        out["state_prob_0"] = 1.0
+        out["state_entropy"] = 0.0
+        return out
+
     out["state_label"] = labels
     for i in range(probs.shape[1]):
         out[f"state_prob_{i}"] = probs[:, i]

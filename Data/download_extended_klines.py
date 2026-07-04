@@ -19,10 +19,14 @@ INTERVAL = "15m"
 LIMIT = 1500
 
 
-def fetch_klines(symbol: str) -> pd.DataFrame:
+def fetch_klines(symbol: str, start_time_ms: int | None = None) -> pd.DataFrame:
     print(f"Klines {symbol}...")
     rows: list = []
-    start = START_MS
+    start = start_time_ms if start_time_ms is not None else START_MS
+    end_time_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+    if start is not None and start > end_time_ms:
+        return pd.DataFrame(columns=["Datetime", "symbol", "Open", "High", "Low", "Close", "Volume"])
+
     while True:
         params = {"symbol": symbol, "interval": INTERVAL, "startTime": start, "limit": LIMIT}
         response = requests.get(f"{FAPI}/fapi/v1/klines", params=params, timeout=60)
@@ -31,7 +35,10 @@ def fetch_klines(symbol: str) -> pd.DataFrame:
         if not batch:
             break
         rows.extend(batch)
-        start = int(batch[-1][0]) + 1
+        last_open_time = int(batch[-1][0])
+        if last_open_time >= end_time_ms:
+            break
+        start = last_open_time + 1
         if len(batch) < LIMIT:
             break
         time.sleep(0.12)

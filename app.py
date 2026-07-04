@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 import json
 import logging
 from pathlib import Path
@@ -35,6 +36,10 @@ class DataRefreshResult:
     source: str
     data_path: Path | None = None
     error: str | None = None
+    refresh_occurred: bool = False
+    new_candles: int = 0
+    raw_latest_timestamp: str | None = None
+    warning: str | None = None
 
 
 @dataclass
@@ -61,15 +66,55 @@ class PerryResult:
     state_feature_path: str
 
 
+def _latest_timestamp_for_asset(path: Path, asset: str) -> str | None:
+    if not path.exists():
+        return None
+    try:
+        frame = pd.read_csv(path, parse_dates=["Datetime"])
+    except Exception:
+        return None
+    if frame.empty or "Datetime" not in frame.columns:
+        return None
+
+    if "symbol" in frame.columns:
+        subset = frame[frame["symbol"] == asset] if asset in frame["symbol"].values else frame
+    else:
+        subset = frame
+
+    latest = pd.to_datetime(subset["Datetime"]).max()
+    return None if pd.isna(latest) else str(latest)
+
+
 def refresh_data(asset: str = DEFAULT_ASSET) -> DataRefreshResult:
     runtime_path = RAW_DATA_DIR / "futures_klines_15m.csv"
+    latest_cached_timestamp = _latest_timestamp_for_asset(runtime_path, asset)
 
     try:
         from Data.download_extended_klines import fetch_klines
 
         RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
-        fresh = fetch_klines(asset)
+        start_ms = None
+        if runtime_path.exists() and latest_cached_timestamp:
+            latest_dt = _coerce_timestamp(latest_cached_timestamp, as_local=False)
+            start_ms = int(latest_dt.to_pydatetime().timestamp() * 1000) + 1
+
+        fresh = fetch_klines(asset, start_time_ms=start_ms)
+        new_candles = int(len(fresh))
+        logger.info("[pipeline] raw dataset path: %s", runtime_path)
+        logger.info("[pipeline] raw dataset last timestamp: %s", latest_cached_timestamp or "missing")
+        logger.info("[pipeline] refresh occurred: %s", new_candles > 0)
+        logger.info("[pipeline] new candles downloaded: %s", new_candles)
+
         if fresh.empty:
+            if runtime_path.exists():
+                return DataRefreshResult(
+                    status="UpToDate",
+                    source="Local Cache",
+                    data_path=runtime_path,
+                    refresh_occurred=False,
+                    new_candles=0,
+                    raw_latest_timestamp=latest_cached_timestamp,
+                )
             raise ValueError(f"Binance refresh returned no rows for {asset}")
 
         if runtime_path.exists():
@@ -84,11 +129,28 @@ def refresh_data(asset: str = DEFAULT_ASSET) -> DataRefreshResult:
 
         updated = updated.sort_values(["symbol", "Datetime"]).reset_index(drop=True)
         updated.to_csv(runtime_path, index=False)
-        return DataRefreshResult(status="Success", source="Binance", data_path=runtime_path)
+        latest_timestamp = _latest_timestamp_for_asset(runtime_path, asset)
+        return DataRefreshResult(
+            status="Refreshed",
+            source="Binance",
+            data_path=runtime_path,
+            refresh_occurred=True,
+            new_candles=new_candles,
+            raw_latest_timestamp=latest_timestamp,
+        )
     except Exception as exc:
         logger.warning("Market data refresh failed; falling back to local cache: %s", exc)
         print(f"WARNING: Market data refresh failed. Using local cache. ({exc})")
-        return DataRefreshResult(status="Fallback", source="Local Cache", data_path=None, error=str(exc))
+        return DataRefreshResult(
+            status="Fallback",
+            source="Local Cache",
+            data_path=runtime_path if runtime_path.exists() else None,
+            error=str(exc),
+            refresh_occurred=False,
+            new_candles=0,
+            raw_latest_timestamp=latest_cached_timestamp,
+            warning=str(exc),
+        )
 
 
 def _csv_has_columns(path: Path, required: Iterable[str]) -> bool:
@@ -97,6 +159,54 @@ def _csv_has_columns(path: Path, required: Iterable[str]) -> bool:
     except Exception:
         return False
     return all(column in sample.columns for column in required)
+
+
+def _should_regenerate_feature_dataset(feature_path: Path, raw_df: pd.DataFrame) -> bool:
+    if not feature_path.exists():
+        return True
+    try:
+        if feature_path.suffix == ".pkl":
+            feature_df = pd.read_pickle(feature_path)
+        else:
+            feature_df = pd.read_csv(feature_path, parse_dates=["Datetime"])
+    except Exception:
+        return True
+
+    if feature_df.empty or "Datetime" not in feature_df.columns:
+        return True
+
+    raw_last = pd.to_datetime(raw_df["Datetime"]).max()
+    feature_last = pd.to_datetime(feature_df["Datetime"]).max()
+    return pd.isna(feature_last) or feature_last < raw_last
+
+
+def _get_local_timezone() -> timezone:
+    try:
+        return datetime.now().astimezone().tzinfo or timezone.utc
+    except Exception:
+        return timezone.utc
+
+
+def _coerce_timestamp(value: Any, as_local: bool = False) -> pd.Timestamp:
+    ts = pd.Timestamp(value)
+    if ts.tzinfo is None:
+        ts = ts.tz_localize("UTC")
+    if as_local:
+        return ts.tz_convert(_get_local_timezone())
+    return ts.tz_convert("UTC")
+
+
+def _describe_timestamp_freshness(
+    latest_market_dt: datetime | pd.Timestamp | str,
+    current_dt: datetime | pd.Timestamp | str | None = None,
+) -> tuple[bool, str]:
+    now = _coerce_timestamp(current_dt or datetime.now().astimezone(), as_local=True)
+    latest = _coerce_timestamp(latest_market_dt, as_local=True)
+    lag_seconds = max(0, int((now - latest).total_seconds()))
+    lag_minutes = lag_seconds // 60
+    if lag_minutes <= 15:
+        return False, "fresh"
+    return True, f"{lag_minutes} minutes behind the current local time"
 
 
 def _latest_existing_path(candidates: Iterable[Path], required_columns: Iterable[str] | None = None) -> Path:
@@ -127,10 +237,6 @@ def discover_raw_datasets() -> list[Path]:
 
 
 def ensure_raw_dataset(asset: str = DEFAULT_ASSET) -> DataRefreshResult:
-    discovered = discover_raw_datasets()
-    if discovered:
-        return DataRefreshResult(status="Cached", source="Discovered Raw Dataset", data_path=discovered[0])
-
     result = refresh_data(asset)
     if result.data_path and result.data_path.exists():
         return result
@@ -138,10 +244,14 @@ def ensure_raw_dataset(asset: str = DEFAULT_ASSET) -> DataRefreshResult:
     discovered = discover_raw_datasets()
     if discovered:
         return DataRefreshResult(
-            status="Fallback",
+            status=result.status if result.status != "Fallback" else "Fallback",
             source="Discovered Raw Dataset",
             data_path=discovered[0],
             error=result.error,
+            refresh_occurred=result.refresh_occurred,
+            new_candles=result.new_candles,
+            raw_latest_timestamp=result.raw_latest_timestamp,
+            warning=result.warning,
         )
     raise FileNotFoundError(
         "Raw dataset is missing and automatic ingestion failed. "
@@ -348,7 +458,7 @@ def discover_state_feature_path(asset: str = DEFAULT_ASSET) -> Path:
 
 def ensure_feature_dataset(raw: pd.DataFrame, asset: str = DEFAULT_ASSET) -> tuple[pd.DataFrame, Path, str]:
     path = discover_feature_path(asset)
-    if path.exists():
+    if path.exists() and not _should_regenerate_feature_dataset(path, raw):
         features = pd.read_pickle(path)
         return features, path, "cached"
 
@@ -363,7 +473,7 @@ def ensure_feature_dataset(raw: pd.DataFrame, asset: str = DEFAULT_ASSET) -> tup
 
 def build_runtime_feature_frame(raw: pd.DataFrame, asset: str = DEFAULT_ASSET) -> tuple[pd.DataFrame, Path, str]:
     path = discover_state_feature_path(asset)
-    if path.exists():
+    if path.exists() and not _should_regenerate_feature_dataset(path, raw):
         feature_df = pd.read_csv(path, parse_dates=["Datetime"])
         return feature_df, path, "cached"
 
@@ -603,8 +713,16 @@ def build_proton_result(
     refresh_result: DataRefreshResult | None = None,
 ) -> PerryResult:
     refresh_result = refresh_result or ensure_raw_dataset(asset)
-    raw = load_latest_data(asset=asset, lookback_rows=None, raw_path=refresh_result.data_path)
-    last_market_timestamp = str(raw["Datetime"].iloc[-1])
+    raw_path = refresh_result.data_path
+    if raw_path is None:
+        raw_path = _latest_existing_path(
+            discover_raw_datasets(),
+            required_columns=["Datetime", "Open", "High", "Low", "Close", "Volume"],
+        )
+    raw = load_latest_data(asset=asset, lookback_rows=None, raw_path=raw_path)
+    latest_market_dt = _coerce_timestamp(raw["Datetime"].iloc[-1], as_local=True)
+    last_market_timestamp = latest_market_dt.strftime("%Y-%m-%d %H:%M:%S") + f" {latest_market_dt.strftime('%Z')}"
+    stale, freshness_detail = _describe_timestamp_freshness(latest_market_dt)
     causal_features, causal_path, causal_status = ensure_feature_dataset(raw, asset)
     runtime_raw = raw.tail(LOOKBACK_ROWS).reset_index(drop=True)
     feature_df, state_path, state_status = build_runtime_feature_frame(runtime_raw, asset)
@@ -635,6 +753,16 @@ def build_proton_result(
     diagnostics["causal_feature_status"] = causal_status
     diagnostics["state_feature_status"] = state_status
     diagnostics["model_status"] = model_status
+    diagnostics["refresh_occurred"] = refresh_result.refresh_occurred
+    diagnostics["new_candles_downloaded"] = refresh_result.new_candles
+    diagnostics["refresh_status"] = refresh_result.status
+    diagnostics["refresh_warning"] = refresh_result.warning or refresh_result.error or ""
+    diagnostics["raw_dataset_path"] = str(raw_path)
+    diagnostics["report_timestamp_source"] = "raw_dataset_last_datetime"
+    diagnostics["report_timestamp_source_file"] = str(raw_path)
+    diagnostics["market_timestamp_freshness"] = freshness_detail
+    diagnostics["market_timestamp_stale"] = str(stale).lower()
+    diagnostics["market_timestamp_timezone"] = str(latest_market_dt.tzinfo)
 
     return PerryResult(
         asset=asset,
@@ -661,10 +789,19 @@ def build_proton_result(
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     refresh_result = ensure_raw_dataset()
     result = build_proton_result(refresh_result=refresh_result)
     REPORT_PATH.write_text(generate_report(result), encoding="utf-8")
+    print(f"[pipeline] raw dataset path: {refresh_result.data_path}")
+    print(f"[pipeline] raw dataset last timestamp: {result.last_market_timestamp}")
+    print(f"[pipeline] refresh occurred: {refresh_result.refresh_occurred}")
+    print(f"[pipeline] new candles downloaded: {refresh_result.new_candles}")
+    print(f"[pipeline] feature regeneration status: causal={result.diagnostics.get('causal_feature_status')}, state={result.diagnostics.get('state_feature_status')}")
+    print(f"[pipeline] report timestamp source: {result.diagnostics.get('report_timestamp_source_file')} -> raw['Datetime'].iloc[-1]")
+    print(f"[pipeline] market timestamp freshness: {result.diagnostics.get('market_timestamp_freshness')}")
+    if result.diagnostics.get("market_timestamp_stale") == "true":
+        print("[pipeline] WARNING: latest market timestamp is older than the current UTC clock; data may be delayed.")
     print_terminal_report(result)
 
 

@@ -328,11 +328,23 @@ def build_gmm_soft_states(
         return pd.DataFrame(index=df.index)
 
     X = df[state_cols].fillna(0.0).values
-    gmm = GaussianMixture(n_components=n_states, covariance_type="full", random_state=random_state)
-    labels = gmm.fit_predict(X)
-    probs = gmm.predict_proba(X)
-
     out = pd.DataFrame(index=df.index)
+    if len(X) < 2:
+        out["state_label"] = 0
+        out["state_prob_0"] = 1.0
+        out["state_entropy"] = 0.0
+        return out
+
+    try:
+        gmm = GaussianMixture(n_components=min(n_states, len(X)), covariance_type="full", random_state=random_state)
+        labels = gmm.fit_predict(X)
+        probs = gmm.predict_proba(X)
+    except ValueError:
+        out["state_label"] = 0
+        out["state_prob_0"] = 1.0
+        out["state_entropy"] = 0.0
+        return out
+
     out["state_label"] = labels
     for i in range(probs.shape[1]):
         out[f"state_prob_{i}"] = probs[:, i]
