@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
@@ -17,6 +18,7 @@ from Model.research_engine import build_causal_features
 from Model.features_data.market_state_discovery import build_market_state_features
 from Model.features_data.market_structure import add_anchored_structure_features
 from Model.features_data.state_space import build_state_space_features
+from Model.paper_trading import PaperTradingConfig, PaperTradingLaboratory
 
 
 ROOT = Path(__file__).resolve().parent
@@ -788,10 +790,35 @@ def build_proton_result(
     )
 
 
-def main() -> None:
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Run Perry's live market intelligence pipeline.")
+    parser.add_argument("--asset", default=DEFAULT_ASSET, help="Asset symbol to evaluate. Defaults to BTCUSDT.")
+    parser.add_argument(
+        "--paper-lab",
+        action="store_true",
+        help="Run the Phase 2 live paper trading laboratory instead of only the prototype report.",
+    )
+    parser.add_argument("--cycles", type=int, default=1, help="Paper laboratory observation cycles to run.")
+    parser.add_argument(
+        "--interval-seconds",
+        type=float,
+        default=0.0,
+        help="Seconds to wait between paper laboratory cycles.",
+    )
+    parser.add_argument("--starting-capital", type=float, default=100_000.0, help="Virtual starting capital.")
+    parser.add_argument(
+        "--minimum-evidence",
+        type=float,
+        default=0.62,
+        help="Minimum evidence score required before the lab opens a virtual trade.",
+    )
+    return parser
+
+
+def run_prototype_once(asset: str = DEFAULT_ASSET) -> PerryResult:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-    refresh_result = ensure_raw_dataset()
-    result = build_proton_result(refresh_result=refresh_result)
+    refresh_result = ensure_raw_dataset(asset)
+    result = build_proton_result(asset=asset, refresh_result=refresh_result)
     REPORT_PATH.write_text(generate_report(result), encoding="utf-8")
     print(f"[pipeline] raw dataset path: {refresh_result.data_path}")
     print(f"[pipeline] raw dataset last timestamp: {result.last_market_timestamp}")
@@ -803,6 +830,32 @@ def main() -> None:
     if result.diagnostics.get("market_timestamp_stale") == "true":
         print("[pipeline] WARNING: latest market timestamp is older than the current UTC clock; data may be delayed.")
     print_terminal_report(result)
+    return result
+
+
+def main() -> None:
+    args = _build_parser().parse_args()
+    if args.paper_lab:
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+        if args.cycles < 1:
+            raise ValueError("--cycles must be at least 1")
+        config = PaperTradingConfig(
+            asset=args.asset,
+            starting_capital=args.starting_capital,
+            cycles=args.cycles,
+            interval_seconds=max(0.0, args.interval_seconds),
+            minimum_evidence=args.minimum_evidence,
+            artifacts_root=ROOT / "artifacts" / "paper_trading",
+        )
+        laboratory = PaperTradingLaboratory(config, result_builder=lambda: build_proton_result(asset=args.asset))
+        experiment_dir = laboratory.run()
+        print(f"[paper-lab] experiment artifacts: {experiment_dir}")
+        print(f"[paper-lab] predictions: {experiment_dir / 'predictions.csv'}")
+        print(f"[paper-lab] dashboard: {experiment_dir / 'dashboard.json'}")
+        print(f"[paper-lab] report: {experiment_dir / 'conclusion.md'}")
+        return
+
+    run_prototype_once(asset=args.asset)
 
 
 if __name__ == "__main__":

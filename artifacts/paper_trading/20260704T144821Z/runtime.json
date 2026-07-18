@@ -1,0 +1,12 @@
+{
+  "experiment_id": "20260704T144821Z",
+  "started_at": "2026-07-04T14:48:21.018031+00:00",
+  "asset": "BTCUSDT",
+  "starting_capital": 100000.0,
+  "cycles_requested": 1,
+  "interval_seconds": 0.0,
+  "minimum_evidence": 0.62,
+  "status": "complete",
+  "ended_at": "2026-07-04T14:48:22.809885+00:00",
+  "cycles_completed": 1
+}

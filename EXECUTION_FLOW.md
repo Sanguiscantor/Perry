@@ -6,6 +6,12 @@
 python app.py
 ```
 
+Phase 2 paper laboratory mode is available through the same entry point:
+
+```bash
+python app.py --paper-lab --cycles 1
+```
+
 ## Flow
 
 1. Load latest data
@@ -57,6 +63,38 @@ python app.py
 9. Generate reports
    - Prints terminal report
    - Writes `prototype_report.md`
+
+## Phase 2 Paper Trading Laboratory
+
+When `--paper-lab` is supplied, Perry runs the same live refresh and feature
+pipeline, then records the observation as a scientific paper-trading experiment.
+
+Each cycle:
+
+1. Refreshes market data and validates freshness diagnostics.
+2. Builds causal, state-space, market-structure, and market-state features.
+3. Produces Perry's current market state, bias, confidence, expected move, top
+   drivers, and human-readable reasoning.
+4. Updates any open virtual position using the latest observed price.
+5. Uses a multi-evidence decision layer to choose `BUY`, `SELL`, or `NO TRADE`.
+6. Records the prediction, portfolio snapshot, trade history, state transition,
+   dashboard payload, runtime metadata, and laboratory conclusion.
+
+Artifacts are written to a new immutable experiment directory:
+
+```text
+artifacts/paper_trading/<timestamp>/
+    predictions.csv
+    trades.csv
+    portfolio.csv
+    state_transitions.csv
+    runtime.json
+    dashboard.json
+    conclusion.md
+```
+
+The laboratory is fully simulated. It does not use broker APIs, does not perform
+reinforcement learning, and does not feed PnL back into Perry's model logic.
 
 ## Single Execution Path
 
