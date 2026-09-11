@@ -9,7 +9,11 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 DERIV_DIR = ROOT / "Data" / "derivatives"
-KLINES_PATH = ROOT / "Data" / "futures_klines_15m.csv"
+
+from perry_config import filename_with_timeframe, get_primary_timeframe
+
+def _get_klines_path() -> Path:
+    return ROOT / "Data" / filename_with_timeframe("futures_klines", get_primary_timeframe())
 
 
 def _load_symbol_csv(path: Path, symbol: str) -> pd.DataFrame | None:
@@ -21,9 +25,10 @@ def _load_symbol_csv(path: Path, symbol: str) -> pd.DataFrame | None:
 
 
 def build_taker_flow_features(symbol: str = "BTCUSDT") -> pd.DataFrame | None:
-    if not KLINES_PATH.exists():
+    path = _get_klines_path()
+    if not path.exists():
         return None
-    df = _load_symbol_csv(KLINES_PATH, symbol)
+    df = _load_symbol_csv(path, symbol)
     if df is None:
         return None
     out = df.set_index("Datetime")
@@ -42,10 +47,11 @@ def build_taker_flow_features(symbol: str = "BTCUSDT") -> pd.DataFrame | None:
 
 def build_sentiment_features(symbol: str = "BTCUSDT", prefix: str = "") -> pd.DataFrame | None:
     frames = []
+    period = get_primary_timeframe()
     specs = [
-        ("global_long_short_15m.csv", ["long_short_ratio", "long_account_pct"], "gls"),
-        ("top_trader_long_short_15m.csv", ["long_short_ratio", "long_account_pct"], "top"),
-        ("taker_buy_sell_15m.csv", ["taker_buy_sell_ratio", "taker_buy_vol", "taker_sell_vol"], "agg"),
+        (filename_with_timeframe("global_long_short", period), ["long_short_ratio", "long_account_pct"], "gls"),
+        (filename_with_timeframe("top_trader_long_short", period), ["long_short_ratio", "long_account_pct"], "top"),
+        (filename_with_timeframe("taker_buy_sell", period), ["taker_buy_sell_ratio", "taker_buy_vol", "taker_sell_vol"], "agg"),
     ]
     for filename, cols, tag in specs:
         path = DERIV_DIR / filename

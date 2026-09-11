@@ -10,6 +10,7 @@ from typing import Any, Iterable
 import warnings
 
 import joblib
+import os
 import numpy as np
 import pandas as pd
 from pandas.errors import PerformanceWarning
@@ -88,7 +89,10 @@ def _latest_timestamp_for_asset(path: Path, asset: str) -> str | None:
 
 
 def refresh_data(asset: str = DEFAULT_ASSET) -> DataRefreshResult:
-    runtime_path = RAW_DATA_DIR / "futures_klines_15m.csv"
+    # Resolve runtime path using current perry_config (reads PERRY_TIMEFRAME env var if set)
+    from perry_config import filename_with_timeframe
+
+    runtime_path = RAW_DATA_DIR / filename_with_timeframe("futures_klines")
     latest_cached_timestamp = _latest_timestamp_for_asset(runtime_path, asset)
 
     try:
@@ -224,11 +228,13 @@ def _latest_existing_path(candidates: Iterable[Path], required_columns: Iterable
 def discover_raw_datasets() -> list[Path]:
     required = ["Datetime", "Open", "High", "Low", "Close", "Volume"]
     candidates = list(RAW_DATA_DIR.rglob("*.csv")) if RAW_DATA_DIR.exists() else []
+    # Include likely candidates and the timeframe-tagged futures klines file.
+    from perry_config import filename_with_timeframe
     candidates.extend(
         [
             ROOT / "Data" / "master_raw_dataset.csv",
             RAW_DATA_DIR / "master_raw_dataset.csv",
-            RAW_DATA_DIR / "futures_klines_15m.csv",
+            RAW_DATA_DIR / filename_with_timeframe("futures_klines"),
         ]
     )
     unique = []
@@ -812,6 +818,12 @@ def _build_parser() -> argparse.ArgumentParser:
         default=0.62,
         help="Minimum evidence score required before the lab opens a virtual trade.",
     )
+    parser.add_argument(
+        "--timeframe",
+        type=str,
+        default=None,
+        help="Primary trading timeframe to use (e.g. 1m,5m,15m,1h). If omitted, you'll be prompted.",
+    )
     return parser
 
 
@@ -835,6 +847,31 @@ def run_prototype_once(asset: str = DEFAULT_ASSET) -> PerryResult:
 
 def main() -> None:
     args = _build_parser().parse_args()
+    # Determine primary timeframe: CLI > interactive prompt > env/default
+    from perry_config import (
+        SUPPORTED_TIMEFRAMES,
+        validate_timeframe,
+        set_primary_timeframe,
+        get_primary_timeframe,
+        get_support_timeframes,
+        timeframe_to_seconds,
+    )
+
+    chosen_tf = args.timeframe
+    if not chosen_tf:
+        print("What trading timeframe would you like to use?")
+        print("Supported:", ", ".join(SUPPORTED_TIMEFRAMES))
+        print(f"Press Enter to use default: {get_primary_timeframe()}")
+        resp = input("Timeframe: ").strip()
+        chosen_tf = resp or get_primary_timeframe()
+
+    if not validate_timeframe(chosen_tf):
+        raise ValueError(f"Unsupported timeframe: {chosen_tf}")
+
+    set_primary_timeframe(chosen_tf)
+    print(f"[pipeline] selected primary timeframe: {chosen_tf}")
+    print(f"[pipeline] supporting timeframes: {', '.join(get_support_timeframes(chosen_tf))}")
+    print(f"[pipeline] refresh interval seconds: {timeframe_to_seconds(chosen_tf)}")
     if args.paper_lab:
         logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
         if args.cycles < 1:
@@ -856,6 +893,7 @@ def main() -> None:
         return
 
     run_prototype_once(asset=args.asset)
+
 
 
 if __name__ == "__main__":

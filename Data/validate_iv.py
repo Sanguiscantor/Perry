@@ -20,6 +20,8 @@ from research_program import load_multi_asset, slice_symbol, save_json, evaluate
 from research_engine import build_causal_features
 from enhanced_features import merge_features
 
+from perry_config import timeframe_to_pandas_offset
+
 import pandas as pd
 
 ART_DIR = ROOT / "artifacts" / "validation"
@@ -79,9 +81,9 @@ def load_iv_aggregated():
     if not iv_cols:
         return None
 
-    # Aggregate to 15m: mean, std, count
+    # Aggregate to primary timeframe: mean, std, count
     df = df.set_index("Datetime")
-    agg = df[iv_cols].resample("15min").agg(["mean", "std", "count"]).ffill()
+    agg = df[iv_cols].resample(timeframe_to_pandas_offset()).agg(["mean", "std", "count"]).ffill()
     # flatten columns
     agg.columns = [f"iv_{col}_{stat}" for col, stat in agg.columns]
     agg = agg.reset_index()

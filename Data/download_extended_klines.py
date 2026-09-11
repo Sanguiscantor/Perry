@@ -11,11 +11,12 @@ import pandas as pd
 import requests
 
 ROOT = Path(__file__).resolve().parent
-OUT_PATH = ROOT / "datasets" / "raw" / "futures_klines_15m.csv"
+from perry_config import binance_interval, filename_with_timeframe, get_primary_timeframe
+
+OUT_DIR = ROOT / "datasets" / "raw"
 SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"]
 FAPI = "https://fapi.binance.com"
 START_MS = int(datetime(2024, 1, 1, tzinfo=timezone.utc).timestamp() * 1000)
-INTERVAL = "15m"
 LIMIT = 1500
 
 
@@ -28,7 +29,8 @@ def fetch_klines(symbol: str, start_time_ms: int | None = None) -> pd.DataFrame:
         return pd.DataFrame(columns=["Datetime", "symbol", "Open", "High", "Low", "Close", "Volume"])
 
     while True:
-        params = {"symbol": symbol, "interval": INTERVAL, "startTime": start, "limit": LIMIT}
+        interval = binance_interval()
+        params = {"symbol": symbol, "interval": interval, "startTime": start, "limit": LIMIT}
         response = requests.get(f"{FAPI}/fapi/v1/klines", params=params, timeout=60)
         response.raise_for_status()
         batch = response.json()
@@ -68,11 +70,12 @@ def fetch_klines(symbol: str, start_time_ms: int | None = None) -> pd.DataFrame:
 
 
 def main() -> None:
-    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
     frames = [fetch_klines(s) for s in SYMBOLS]
     out = pd.concat(frames, ignore_index=True).sort_values(["symbol", "Datetime"])
-    out.to_csv(OUT_PATH, index=False)
-    print(f"Saved {OUT_PATH} ({len(out):,} rows)")
+    output_path = OUT_DIR / filename_with_timeframe("futures_klines", get_primary_timeframe())
+    out.to_csv(output_path, index=False)
+    print(f"Saved {output_path} ({len(out):,} rows)")
 
 
 if __name__ == "__main__":

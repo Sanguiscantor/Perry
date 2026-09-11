@@ -217,8 +217,10 @@ def phase2_data_integration() -> dict[str, Any]:
         subprocess.run([sys.executable, str(ROOT / "Data" / "download_derivatives.py")], check=False)
     report: dict[str, Any] = {"sources": [], "integrated": False}
 
+    from perry_config import filename_with_timeframe, get_primary_timeframe, timeframe_to_pandas_offset
+
     funding_path = deriv_dir / "funding_rates.csv"
-    oi_path = deriv_dir / "open_interest_15m.csv"
+    oi_path = deriv_dir / filename_with_timeframe("open_interest", get_primary_timeframe())
 
     if funding_path.exists():
         funding = pd.read_csv(funding_path, parse_dates=["Datetime"])
@@ -231,7 +233,7 @@ def phase2_data_integration() -> dict[str, Any]:
                 "start": str(funding["Datetime"].min()),
                 "end": str(funding["Datetime"].max()),
                 "native_frequency": "8h",
-                "merged_frequency": "15m forward-fill",
+                "merged_frequency": f"{timeframe_to_pandas_offset()} forward-fill",
                 "limitations": "Event-time 8h; ffilled to candles introduces staleness",
                 "quality": "Official exchange; complete for majors since 2024",
             }
@@ -246,7 +248,7 @@ def phase2_data_integration() -> dict[str, Any]:
                 "symbols": oi["symbol"].unique().tolist(),
                 "start": str(oi["Datetime"].min()),
                 "end": str(oi["Datetime"].max()),
-                "native_frequency": "15m",
+                "native_frequency": get_primary_timeframe(),
                 "limitations": "Endpoint max ~500 rows per call; paginated",
                 "quality": "Good alignment with Perry bars",
             }

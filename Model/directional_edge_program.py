@@ -293,13 +293,16 @@ def evaluate_move_gated_direction(
 
 def data_quality_report() -> dict[str, Any]:
     report: dict[str, Any] = {"sources": [], "failures": []}
+    from perry_config import filename_with_timeframe, get_primary_timeframe
+
+    period = get_primary_timeframe()
     checks = [
         ("funding_rates.csv", DERIV_DIR),
-        ("open_interest_15m.csv", DERIV_DIR),
-        ("global_long_short_15m.csv", DERIV_DIR),
-        ("top_trader_long_short_15m.csv", DERIV_DIR),
-        ("taker_buy_sell_15m.csv", DERIV_DIR),
-        ("futures_klines_15m.csv", ROOT / "Data"),
+        (filename_with_timeframe("open_interest", period), DERIV_DIR),
+        (filename_with_timeframe("global_long_short", period), DERIV_DIR),
+        (filename_with_timeframe("top_trader_long_short", period), DERIV_DIR),
+        (filename_with_timeframe("taker_buy_sell", period), DERIV_DIR),
+        (filename_with_timeframe("futures_klines", period), ROOT / "Data"),
     ]
     for name, directory in checks:
         path = directory / name

@@ -48,8 +48,12 @@ def fetch_funding(symbol: str) -> pd.DataFrame:
     return df[["Datetime", "symbol", "funding_rate"]]
 
 
-def fetch_open_interest(symbol: str, period: str = "15m") -> pd.DataFrame:
+from perry_config import filename_with_timeframe, get_primary_timeframe
+
+
+def fetch_open_interest(symbol: str, period: str | None = None) -> pd.DataFrame:
     """Binance OI history is capped (~30 days per request window); walk backward in time."""
+    period = period or get_primary_timeframe()
     print(f"Open interest {symbol} ({period})...")
     window_ms = 29 * 24 * 60 * 60 * 1000
     end = int(datetime.now(timezone.utc).timestamp() * 1000)
@@ -97,9 +101,11 @@ def main() -> None:
         funding.to_csv(OUT_DIR / "funding_rates.csv", index=False)
         print(f"Saved funding_rates.csv ({len(funding):,} rows)")
     if oi_frames:
+        period = get_primary_timeframe()
         oi = pd.concat(oi_frames, ignore_index=True)
-        oi.to_csv(OUT_DIR / "open_interest_15m.csv", index=False)
-        print(f"Saved open_interest_15m.csv ({len(oi):,} rows)")
+        filename = filename_with_timeframe("open_interest", period)
+        oi.to_csv(OUT_DIR / filename, index=False)
+        print(f"Saved {filename} ({len(oi):,} rows)")
 
 
 if __name__ == "__main__":

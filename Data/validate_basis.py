@@ -4,34 +4,37 @@ Produces `artifacts/validation/basis_vs_baseline.json` with evaluation summaries
 """
 from __future__ import annotations
 
-from pathlib import Path
 import json
-
 import sys
-from pathlib import Path as _Path
-ROOT = _Path(__file__).resolve().parents[1]
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "Model") not in sys.path:
     sys.path.insert(0, str(ROOT / "Model"))
 
 from research_program import load_multi_asset, slice_symbol, save_json, evaluate_move_signal
 from research_engine import build_causal_features
 from enhanced_features import merge_features
+from perry_config import filename_with_timeframe, get_primary_timeframe
 
-ROOT = Path(__file__).resolve().parents[1]
 ART_DIR = ROOT / "artifacts" / "validation"
 ART_DIR.mkdir(parents=True, exist_ok=True)
 
-BASIS_PATH = ROOT / "artifacts" / "data" / "microstructure" / "basis_15m.csv"
+
+def basis_path() -> Path:
+    return ROOT / "artifacts" / "data" / "microstructure" / filename_with_timeframe("basis", get_primary_timeframe())
 
 
 def load_basis_for(symbol: str = "BTCUSDT"):
     import pandas as pd
-    if not BASIS_PATH.exists():
+
+    basis_file = basis_path()
+    if not basis_file.exists():
         return None
-    df = pd.read_csv(BASIS_PATH, parse_dates=["Datetime"]) 
+
+    df = pd.read_csv(basis_file, parse_dates=["Datetime"])
     df = df[df["symbol"] == symbol][["Datetime", "basis"]].sort_values("Datetime")
-    df = df.reset_index(drop=True)
-    return df
+    return df.reset_index(drop=True)
 
 
 def main():
@@ -42,12 +45,13 @@ def main():
     # Baseline evaluation
     baseline_metrics = evaluate_move_signal(btc_raw, base)
 
-    # Basis-augmented
+    # Basis-augmented evaluation
     basis = load_basis_for()
     if basis is None or basis.empty:
         print("No basis data available; skipping basis-augmented run.")
         save_json("validation/basis_vs_baseline", {"baseline": baseline_metrics, "basis_augmented": "no_data"})
         return
+
     merged = merge_features(base, deriv=basis)
     basis_metrics = evaluate_move_signal(btc_raw, merged)
 

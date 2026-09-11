@@ -60,9 +60,11 @@ def build_cross_asset_features(multi: pd.DataFrame, anchor: str = "BTCUSDT") -> 
     return out.reset_index(drop=True)
 
 
+from perry_config import filename_with_timeframe, get_primary_timeframe, timeframe_to_pandas_offset
+
 def build_derivatives_features(anchor: str = "BTCUSDT") -> pd.DataFrame | None:
     funding_path = DERIV_DIR / "funding_rates.csv"
-    oi_path = DERIV_DIR / "open_interest_15m.csv"
+    oi_path = DERIV_DIR / filename_with_timeframe("open_interest", get_primary_timeframe())
     if not funding_path.exists() and not oi_path.exists():
         return None
 
@@ -70,7 +72,7 @@ def build_derivatives_features(anchor: str = "BTCUSDT") -> pd.DataFrame | None:
     if funding_path.exists():
         funding = pd.read_csv(funding_path, parse_dates=["Datetime"])
         sym = funding[funding["symbol"] == anchor].sort_values("Datetime")
-        f = sym.set_index("Datetime")[["funding_rate"]].resample("15min").ffill()
+        f = sym.set_index("Datetime")[["funding_rate"]].resample(timeframe_to_pandas_offset()).ffill()
         f["funding_rate_z_96"] = (f["funding_rate"] - f["funding_rate"].rolling(96, min_periods=24).mean()) / f["funding_rate"].rolling(96, min_periods=24).std()
         f["funding_rate_change_8h"] = f["funding_rate"].diff(32)
         frames.append(f)

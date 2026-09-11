@@ -26,6 +26,8 @@ from binance.client import Client
 import pandas as pd
 from pathlib import Path
 
+from perry_config import binance_interval
+
 client = Client()
 
 SYMBOLS = [
@@ -36,7 +38,7 @@ SYMBOLS = [
     #"XRPUSDT",
 ]
 
-INTERVAL = Client.KLINE_INTERVAL_15MINUTE
+INTERVAL = binance_interval()
 
 START_DATE = "1 Jan, 2024"
 

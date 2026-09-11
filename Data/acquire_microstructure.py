@@ -24,6 +24,8 @@ ROOT = Path(__file__).resolve().parent
 ARTIFACT_DIR = ROOT.parent / "artifacts" / "data" / "microstructure"
 ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
 
+from perry_config import filename_with_timeframe, get_primary_timeframe
+
 DERIBIT_API = "https://www.deribit.com/api/v2"
 BINANCE_FAPI = "https://fapi.binance.com"
 
@@ -98,7 +100,7 @@ def attempt_binance_liquidations(symbols: List[str]) -> pd.DataFrame:
 
 def compute_basis() -> pd.DataFrame:
     """Compute futures - spot basis using existing local CSVs if available."""
-    fut_path = ROOT.parent / "Data" / "futures_klines_15m.csv"
+    fut_path = ROOT.parent / "Data" / filename_with_timeframe("futures_klines", get_primary_timeframe())
     spot_path = ROOT.parent / "Data" / "master_raw_dataset.csv"
     if not fut_path.exists() or not spot_path.exists():
         print("Required kline files missing; skipping basis computation.")
@@ -120,7 +122,7 @@ def compute_basis() -> pd.DataFrame:
     spot = spot[["Datetime", "symbol", "Close"]].rename(columns={"Close": "spot_close"})
     merged = pd.merge_asof(fut.sort_values("Datetime"), spot.sort_values("Datetime"), on="Datetime", by="symbol", direction="backward")
     merged["basis"] = merged["future_close"] - merged["spot_close"]
-    path = _write_csv(merged, "basis_15m.csv")
+    path = _write_csv(merged, filename_with_timeframe("basis", get_primary_timeframe()))
     print(f"Saved {path} ({len(merged):,} rows)")
     return merged
 
@@ -176,7 +178,7 @@ def main():
     try:
         basis = compute_basis()
         if not basis.empty:
-            files.append(ARTIFACT_DIR / "basis_15m.csv")
+            files.append(ARTIFACT_DIR / filename_with_timeframe("basis", get_primary_timeframe()))
     except Exception as exc:
         print(f"Basis computation failed: {exc}")
 

@@ -14,7 +14,9 @@ OUT_DIR = ROOT / "derivatives"
 SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"]
 FAPI = "https://fapi.binance.com/futures/data"
 START_MS = int(datetime(2024, 1, 1, tzinfo=timezone.utc).timestamp() * 1000)
-PERIOD = "15m"
+
+from perry_config import filename_with_timeframe, get_primary_timeframe
+
 LIMIT = 500
 MAX_CHUNKS = 200
 
@@ -26,7 +28,7 @@ def paginate_metric(endpoint: str, symbol: str, parser) -> pd.DataFrame:
     for _ in range(MAX_CHUNKS):
         response = requests.get(
             f"{FAPI}/{endpoint}",
-            params={"symbol": symbol, "period": PERIOD, "limit": LIMIT, "endTime": end},
+            params={"symbol": symbol, "period": get_primary_timeframe(), "limit": LIMIT, "endTime": end},
             timeout=60,
         )
         if response.status_code != 200:
@@ -85,11 +87,12 @@ def main() -> None:
         top_ls.append(paginate_metric("topLongShortPositionRatio", symbol, parse_ls))
         taker.append(paginate_metric("takerlongshortRatio", symbol, parse_taker))
 
+    period = get_primary_timeframe()
     for name, frames in [
-        ("open_interest_15m.csv", oi_frames),
-        ("global_long_short_15m.csv", global_ls),
-        ("top_trader_long_short_15m.csv", top_ls),
-        ("taker_buy_sell_15m.csv", taker),
+        (filename_with_timeframe("open_interest", period), oi_frames),
+        (filename_with_timeframe("global_long_short", period), global_ls),
+        (filename_with_timeframe("top_trader_long_short", period), top_ls),
+        (filename_with_timeframe("taker_buy_sell", period), taker),
     ]:
         valid = [f for f in frames if len(f)]
         if valid:
